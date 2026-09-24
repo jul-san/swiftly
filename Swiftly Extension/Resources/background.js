@@ -1,6 +1,1 @@
-browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Received request: ", request);
-
-    if (request.greeting === "hello")
-        return Promise.resolve({ farewell: "goodbye" });
-});
+// Service worker — no active handlers needed for the current popup-direct flow.

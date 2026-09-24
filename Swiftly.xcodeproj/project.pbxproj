@@ -228,8 +228,10 @@
 		FF16FCBF30645F1C0026F9B6 /* Debug configuration for PBXNativeTarget "Swiftly Extension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "Swiftly Extension/Swiftly Extension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8B87ZD75NT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Swiftly Extension/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Swiftly Extension";
@@ -259,8 +261,10 @@
 		FF16FCC030645F1C0026F9B6 /* Release configuration for PBXNativeTarget "Swiftly Extension" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "Swiftly Extension/Swiftly Extension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8B87ZD75NT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Swiftly Extension/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Swiftly Extension";
@@ -292,8 +296,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Swiftly/Swiftly.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8B87ZD75NT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Swiftly/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Swiftly;
@@ -330,8 +336,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Swiftly/Swiftly.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8B87ZD75NT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Swiftly/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Swiftly;
