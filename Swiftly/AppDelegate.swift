@@ -5,20 +5,16 @@
 //  Created by Julian Sanchez on 9/23/26.
 //
 
-import UIKit
+import Cocoa
 
+// Background-only app — no window needed. All UI lives in the Safari extension
+// popup; this process only hosts the extension's native message handler
+// (SafariWebExtensionHandler) and the shared App Group profile store.
+// LSUIElement in Info.plist keeps it out of the Dock and app switcher.
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate {
 
-    var window: UIWindow?
-
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
-        return true
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        true
     }
-
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
-    }
-
 }

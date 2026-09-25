@@ -44,7 +44,14 @@ struct ResumeParser {
             return .failure(.noExtractableText)
         }
 
-        let sections = splitIntoSections(lines)
+        // PDFKit text extraction frequently puts a bullet glyph on its own line, separate
+        // from the text that follows it. Re-attach them per-section (never across a section
+        // heading) before any entry parsing happens.
+        let sections = splitIntoSections(lines).map { section -> RawSection in
+            var s = section
+            s.lines = mergeBulletMarkerLines(s.lines)
+            return s
+        }
         var warnings: [String] = []
 
         let personal = parsePersonalInfo(sections: sections, warnings: &warnings)
@@ -136,8 +143,13 @@ struct ResumeParser {
         personal.email = extractFirst(pattern: Self.emailRegex, from: allLines)
         personal.phone = extractFirst(pattern: Self.phoneRegex, from: allLines)
 
+        // Personal sites on custom domains (e.g. "jane.dev") only ever appear in the
+        // header, so that search is scoped there (and email lines excluded, since an
+        // address like "jane@pm.me" would otherwise match "pm.me" as a domain).
+        let nonEmailHeaderLines = headerLines.filter { !$0.contains("@") }
         let urls = extractAll(pattern: Self.httpsURLRegex, from: allLines)
-            + extractAll(pattern: Self.bareURLRegex, from: allLines)
+            + (extractAll(pattern: Self.bareURLRegex, from: allLines)
+               + extractAll(pattern: Self.bareDomainRegex, from: nonEmailHeaderLines))
             .map { $0.hasPrefix("http") ? $0 : "https://\($0)" }
 
         personal.linkedinURL = urls.first { $0.contains("linkedin.com") }
@@ -191,9 +203,10 @@ struct ResumeParser {
             if case .education = $0.kind { return true }; return false
         }) else { return [] }
 
-        return groupByBlankLines(section.lines).compactMap { group in
-            parseEducationEntry(group)
+        let groups = groupByEntries(section.lines) { _, line in
+            !isBullet(line) && extractDateRange(from: line).1 != nil
         }
+        return groups.compactMap { parseEducationEntry($0) }
     }
 
     private func parseEducationEntry(_ lines: [String]) -> EducationEntry? {
@@ -204,42 +217,45 @@ struct ResumeParser {
 
         var entry = EducationEntry(institution: "")
 
-        var remaining: [String] = []
-        for line in headerLines {
-            let (main, date) = extractDateRange(from: line)
-            if let d = date {
-                assignDate(d, toEducation: &entry)
+        let (mainText, date) = extractDateRange(from: headerLines[0])
+        if let d = date { assignDate(d, toEducation: &entry) }
+
+        let dashParts = splitOnDash(mainText)
+        var consumed = 1
+        if dashParts.count >= 2 {
+            entry.institution = dashParts[0]
+            parseDegree(dashParts.dropFirst().joined(separator: ", "), into: &entry)
+        } else {
+            entry.institution = mainText.trimmingCharacters(in: .whitespaces)
+            if headerLines.count > 1 {
+                parseDegree(headerLines[1], into: &entry)
+                consumed = 2
             }
-            let m = main.trimmingCharacters(in: CharacterSet(charactersIn: " \t|–—-·,"))
-            if !m.isEmpty { remaining.append(m) }
         }
 
-        if remaining.isEmpty { return nil }
-        entry.institution = remaining[0]
-        if remaining.count >= 2 {
-            parseDegree(remaining[1], into: &entry)
+        for line in headerLines.dropFirst(consumed) {
+            if line.lowercased().contains("gpa") {
+                entry.gpa = entry.gpa ?? extractGPA(from: line)
+            } else if entry.location.isNilOrEmpty, looksLikeLocation(line) {
+                entry.location = line
+            } else {
+                entry.details.append(line)
+            }
         }
 
         for line in bulletLines {
             let text = stripBullet(line)
+            guard !text.isEmpty else { continue }
             if text.lowercased().contains("gpa") || text.lowercased().contains("grade") {
                 entry.gpa = entry.gpa ?? extractGPA(from: text)
-            } else if !text.isEmpty {
+            } else if text.lowercased().hasPrefix("award") {
+                entry.awards.append(text)
+            } else {
                 entry.details.append(text)
             }
         }
 
-        for line in remaining.dropFirst(2) {
-            if line.lowercased().contains("gpa") {
-                entry.gpa = entry.gpa ?? extractGPA(from: line)
-            } else if !entry.location.isNilOrEmpty {
-                // location already set
-            } else if looksLikeLocation(line) {
-                entry.location = line
-            }
-        }
-
-        return entry
+        return entry.institution.isEmpty ? nil : entry
     }
 
     private func parseDegree(_ text: String, into entry: inout EducationEntry) {
@@ -272,9 +288,10 @@ struct ResumeParser {
             if case .experience = $0.kind { return true }; return false
         }) else { return [] }
 
-        return groupByBlankLines(section.lines).compactMap { group in
-            parseExperienceEntry(group)
+        let groups = groupByEntries(section.lines) { _, line in
+            !isBullet(line) && extractDateRange(from: line).1 != nil
         }
+        return groups.compactMap { parseExperienceEntry($0) }
     }
 
     private func parseExperienceEntry(_ lines: [String]) -> ExperienceEntry? {
@@ -283,40 +300,45 @@ struct ResumeParser {
 
         guard !headerLines.isEmpty else { return nil }
 
-        var remaining: [String] = []
         var entry = ExperienceEntry(company: "")
 
-        for line in headerLines {
-            let (main, date) = extractDateRange(from: line)
-            if let d = date {
-                assignDate(d, toExperience: &entry)
+        let (mainText, date) = extractDateRange(from: headerLines[0])
+        if let d = date { assignDate(d, toExperience: &entry) }
+
+        var consumed = 1
+        let dashParts = splitOnDash(mainText)
+        let pipeParts = mainText.components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+
+        if dashParts.count >= 2 {
+            entry.company = dashParts[0]
+            entry.title = dashParts[1]
+            if dashParts.count >= 3 { entry.location = dashParts[2] }
+        } else if pipeParts.count >= 2 {
+            entry.company = pipeParts[0]
+            entry.title = pipeParts[1]
+            if pipeParts.count >= 3 { entry.location = pipeParts[2] }
+        } else {
+            // Fall back to the older convention: company / title / location each on
+            // their own line.
+            entry.company = mainText.trimmingCharacters(in: .whitespaces)
+            if headerLines.count > 1 {
+                entry.title = headerLines[1]
+                consumed = 2
             }
-            let m = main.trimmingCharacters(in: CharacterSet(charactersIn: " \t|–—-·,"))
-            if !m.isEmpty { remaining.append(m) }
+            if headerLines.count > 2, looksLikeLocation(headerLines[2]) {
+                entry.location = headerLines[2]
+                consumed = 3
+            }
         }
 
-        // Inline pipe-separated headers: "Company | Title | Location | Date"
-        if headerLines.count == 1 {
-            let inlineParts = headerLines[0]
-                .components(separatedBy: "|")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-            if inlineParts.count >= 2 {
-                let (c, _) = extractDateRange(from: inlineParts[0])
-                let (t, _) = extractDateRange(from: inlineParts[1])
-                entry.company = c.trimmingCharacters(in: .whitespaces)
-                entry.title = t.trimmingCharacters(in: .whitespaces)
-                entry.bullets = bulletLines.map { stripBullet($0) }.filter { !$0.isEmpty }
-                return entry.company.isEmpty ? nil : entry
-            }
+        // Any remaining header lines (e.g. a sector/team name under the job title) don't
+        // fit company/title/location — keep them without guessing which field they belong in.
+        if headerLines.count > consumed {
+            entry.teamsOrGroups.append(contentsOf: headerLines[consumed...])
         }
-
-        if remaining.isEmpty { return nil }
-        entry.company = remaining[0]
-        if remaining.count >= 2 { entry.title = remaining[1] }
-        if remaining.count >= 3 { entry.location = remaining[2] }
 
         entry.bullets = bulletLines.map { stripBullet($0) }.filter { !$0.isEmpty }
-        return entry
+        return entry.company.isEmpty ? nil : entry
     }
 
     // MARK: - Projects
@@ -326,9 +348,12 @@ struct ResumeParser {
             if case .projects = $0.kind { return true }; return false
         }) else { return [] }
 
-        return groupByBlankLines(section.lines).compactMap { group in
-            parseProjectEntry(group)
+        // Project headers rarely carry a date, so a new entry is instead recognized as a
+        // non-bulleted line arriving after the current entry has already collected bullets.
+        let groups = groupByEntries(section.lines) { current, line in
+            !isBullet(line) && current.contains(where: isBullet)
         }
+        return groups.compactMap { parseProjectEntry($0) }
     }
 
     private func parseProjectEntry(_ lines: [String]) -> ProjectEntry? {
@@ -339,11 +364,17 @@ struct ResumeParser {
 
         var entry = ProjectEntry(name: "")
 
-        // Split on | or · for inline metadata
-        let parts = headerLine
+        // Split on | or · for inline metadata; fall back to a spaced dash
+        // ("Name – Tech GitHub") when neither delimiter is present.
+        var parts = headerLine
             .components(separatedBy: CharacterSet(charactersIn: "|·"))
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+        if parts.count < 2 {
+            let dashParts = splitOnDash(headerLine)
+            if dashParts.count >= 2 { parts = dashParts }
+        }
+        if parts.isEmpty { parts = [headerLine.trimmingCharacters(in: .whitespaces)] }
 
         entry.name = parts[0]
 
@@ -490,6 +521,11 @@ struct ResumeParser {
         pattern: #"https?://[^\s]+"#)
     private static let bareURLRegex = try! NSRegularExpression(
         pattern: #"(?:www\.|linkedin\.com|github\.com)[^\s]*"#)
+    // Catches a personal site on a custom domain (e.g. "jane.dev", "jane.me") that isn't
+    // prefixed with "www." — scoped to header lines only, see call site.
+    private static let bareDomainRegex = try! NSRegularExpression(
+        pattern: #"\b[a-zA-Z0-9-]+\.(?:me|dev|io|co|app|xyz|tech|net|org|com)(?:/[^\s]*)?\b"#,
+        options: .caseInsensitive)
     private static let gpaRegex = try! NSRegularExpression(
         pattern: #"(?:GPA|G\.P\.A\.)\s*:?\s*(\d+\.\d+)"#, options: .caseInsensitive)
     private static let locationRegex = try! NSRegularExpression(
@@ -531,10 +567,18 @@ struct ResumeParser {
     private func extractLocation(from lines: [String]) -> String? {
         for line in lines {
             guard !line.contains("@") else { continue }
-            let r = NSRange(line.startIndex..., in: line)
-            if let m = Self.locationRegex.firstMatch(in: line, range: r),
-               let sr = Range(m.range, in: line) {
-                return String(line[sr]).trimmingCharacters(in: .whitespacesAndNewlines)
+            // Test each "|"-delimited segment on its own, and require it to be exactly
+            // "something, something" (one comma) — a real "City, ST" won't have a third
+            // comma-separated item, but a tagline like "Backend, Enterprise Tools,
+            // Prototyping" will, so this rejects it without needing a city gazetteer.
+            for segment in line.components(separatedBy: "|") {
+                let trimmed = segment.trimmingCharacters(in: .whitespaces)
+                guard trimmed.components(separatedBy: ",").count == 2 else { continue }
+                let r = NSRange(trimmed.startIndex..., in: trimmed)
+                if let m = Self.locationRegex.firstMatch(in: trimmed, range: r),
+                   let sr = Range(m.range, in: trimmed) {
+                    return String(trimmed[sr]).trimmingCharacters(in: .whitespacesAndNewlines)
+                }
             }
         }
         return nil
@@ -586,17 +630,79 @@ struct ResumeParser {
 
     // MARK: - Generic helpers
 
-    private func groupByBlankLines(_ lines: [String]) -> [[String]] {
+    // Some PDF exports drop the bullet glyph onto its own line, separated from the text
+    // that follows it (e.g. "\u{2022}\nBuilt a thing." instead of "\u{2022} Built a thing.").
+    // Re-attach a lone marker line to the non-empty, non-bulleted, dateless lines that
+    // follow it, stopping at the next bullet, a blank line, or a line that looks like the
+    // start of a new entry (i.e. carries a date).
+    private func mergeBulletMarkerLines(_ lines: [String]) -> [String] {
+        var result: [String] = []
+        var i = 0
+        while i < lines.count {
+            let line = lines[i]
+            if isBullet(line), stripBullet(line).isEmpty {
+                var continuation: [String] = []
+                var j = i + 1
+                while j < lines.count {
+                    let next = lines[j]
+                    if next.isEmpty || isBullet(next) || extractDateRange(from: next).1 != nil {
+                        break
+                    }
+                    continuation.append(next)
+                    j += 1
+                    // A line ending in terminal punctuation is a complete sentence — the
+                    // bullet is done. Without this, a bullet with no date after it (e.g. in
+                    // a Projects section) would swallow the next entry's header line too.
+                    if next.hasSuffix(".") || next.hasSuffix("!") || next.hasSuffix("?") {
+                        break
+                    }
+                }
+                if !continuation.isEmpty {
+                    result.append("• " + continuation.joined(separator: " "))
+                    i = j
+                    continue
+                }
+            }
+            result.append(line)
+            i += 1
+        }
+        return result
+    }
+
+    // Splits on a dash (en dash, em dash, or hyphen) only when it's surrounded by spaces,
+    // so hyphenated words like "Part-time" or "C#/.NET" are left intact. Used to pull
+    // "Company – Title – Location" or "Institution - Degree" apart when a resume puts them
+    // on a single line rather than one field per line.
+    private func splitOnDash(_ text: String) -> [String] {
+        var unified = text
+        for token in [" – ", " — ", " - "] {
+            unified = unified.replacingOccurrences(of: token, with: "\u{1}")
+        }
+        return unified.components(separatedBy: "\u{1}")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
+    // Groups a section's lines into entries. A blank line always starts a new entry (when
+    // a resume preserves that structure); `isBoundary` additionally recognizes an entry
+    // header even when no blank line separates it from the previous entry, which real PDF
+    // text extraction frequently fails to preserve.
+    private func groupByEntries(_ lines: [String], isBoundary: ([String], String) -> Bool) -> [[String]] {
         var groups: [[String]] = []
-        var current: [String] = []
+        var forceBoundary = false
         for line in lines {
             if line.isEmpty {
-                if !current.isEmpty { groups.append(current); current = [] }
-            } else {
-                current.append(line)
+                forceBoundary = true
+                continue
             }
+            let current = groups.last ?? []
+            if groups.isEmpty || forceBoundary || isBoundary(current, line) {
+                groups.append([line])
+            } else {
+                groups[groups.count - 1].append(line)
+            }
+            forceBoundary = false
         }
-        if !current.isEmpty { groups.append(current) }
         return groups
     }
 

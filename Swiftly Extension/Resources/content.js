@@ -6,7 +6,8 @@ browser.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 });
 
 async function autofill(profile, resume) {
-  const fullName = profile.name ?? [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+  const personal = profile.personal;
+  const fullName = personal.fullName ?? [personal.firstName, personal.lastName].filter(Boolean).join(" ");
   let filled = 0;
 
   // ── Resume file first — let Ashby parse it and pre-populate fields ────────
@@ -30,39 +31,39 @@ async function autofill(profile, resume) {
       signals: ["_systemfieldname", "fullname", "full name", "full_name", "yourname", "applicantname", "candidatename"],
     },
     {
-      value: profile.firstName,
+      value: personal.firstName,
       signals: ["firstname", "first name", "first_name", "fname", "givenname", "given name"],
     },
     {
-      value: profile.lastName,
+      value: personal.lastName,
       signals: ["lastname", "last name", "last_name", "lname", "familyname", "family name", "surname"],
     },
     {
-      value: profile.email,
+      value: personal.email,
       signals: ["_systemfieldemail", "email", "email address", "emailaddress", "e-mail", "emailid"],
     },
     {
-      value: profile.phone,
+      value: personal.phone,
       signals: ["phone", "phone number", "phonenumber", "mobile", "telephone", "cell", "cellphone"],
     },
     {
-      value: profile.location,
+      value: personal.location,
       signals: ["location", "city", "address", "city state", "citystate", "currentlocation", "current location", "where are you located"],
     },
     {
-      value: profile.pronouns,
+      value: personal.pronouns,
       signals: ["pronouns", "your pronouns", "preferred pronouns"],
     },
     {
-      value: profile.linkedin,
+      value: personal.linkedinURL,
       signals: ["linkedin", "linkedinurl", "linkedinprofile", "linkedin profile", "linkedin url"],
     },
     {
-      value: profile.github,
+      value: personal.githubURL,
       signals: ["github", "githuburl", "githubprofile", "github profile"],
     },
     {
-      value: profile.website,
+      value: personal.website,
       signals: ["website", "personalwebsite", "personal website", "portfoliourl", "portfolio", "personalsite", "homepage"],
     },
   ];
@@ -80,32 +81,32 @@ async function autofill(profile, resume) {
 
   const radioMappings = [
     {
-      value: profile.workAuth,
+      value: personal.workAuthorization,
       questionSignals: ["authorized to work", "authorized to be employed", "legally authorized", "work authorization", "eligible to work", "right to work"],
     },
     {
-      value: profile.sponsorship,
+      value: personal.requiresSponsorship,
       questionSignals: ["sponsorship", "visa sponsorship", "require sponsorship", "need sponsorship", "require a visa"],
     },
     {
-      value: profile.gender,
+      value: personal.genderIdentity,
       questionSignals: ["gender identity", "gender", "what is your gender"],
     },
     {
-      value: profile.veteran,
+      value: personal.veteranStatus,
       questionSignals: ["veteran status", "veteran", "protected veteran", "military status"],
     },
     {
-      value: profile.disability,
+      value: personal.disabilityStatus,
       questionSignals: ["disability", "disabled", "disability status"],
     },
     // EEOC standard system fields (Ashby-specific)
     {
-      value: profile.gender,
+      value: personal.genderIdentity,
       systemFieldSignals: ["_systemfield_eeoc_gender"],
     },
     {
-      value: profile.veteran,
+      value: personal.veteranStatus,
       systemFieldSignals: ["_systemfield_eeoc_veteran_status"],
     },
   ];
@@ -121,15 +122,15 @@ async function autofill(profile, resume) {
 
   const yesNoMappings = [
     {
-      value: profile.workAuth,
+      value: personal.workAuthorization,
       questionSignals: ["authorized to work", "authorized to be employed", "legally authorized", "work authorization", "eligible to work", "right to work"],
     },
     {
-      value: profile.sponsorship,
+      value: personal.requiresSponsorship,
       questionSignals: ["sponsorship", "visa sponsorship", "require sponsorship", "need sponsorship", "require a visa"],
     },
     {
-      value: profile.inPerson,
+      value: personal.inPersonWork,
       questionSignals: ["work from our office", "work from the office", "work in our office", "work in person", "work on site", "work onsite", "days per week", "in-person", "in person"],
     },
   ];
@@ -144,8 +145,8 @@ async function autofill(profile, resume) {
 
   // ── Checkboxes ────────────────────────────────────────────────────────────
 
-  if (profile.race) {
-    const raceValues = profile.race.split(",").map(s => s.trim()).filter(Boolean);
+  if (personal.raceEthnicity) {
+    const raceValues = personal.raceEthnicity.split(",").map(s => s.trim()).filter(Boolean);
     const raceFilled = fillCheckboxesInGroup(
       ["race", "ethnicity", "race ethnicity", "racial identity"],
       null,

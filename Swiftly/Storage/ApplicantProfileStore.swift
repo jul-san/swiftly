@@ -12,8 +12,23 @@ final class ApplicantProfileStore: ProfileStoring {
     private static let defaultsKey = "com.swiftly.applicantProfile.v1"
 
     private let defaults: UserDefaults
-    private let encoder = JSONEncoder()
-    private let decoder = JSONDecoder()
+    private let encoder = ApplicantProfileStore.makeEncoder()
+    private let decoder = ApplicantProfileStore.makeDecoder()
+
+    // Dates are encoded as Unix seconds so the Safari extension (JavaScript) can read
+    // them directly with `new Date(seconds * 1000)` without reimplementing Swift's
+    // reference-date epoch.
+    static func makeEncoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .secondsSince1970
+        return encoder
+    }
+
+    static func makeDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+        return decoder
+    }
 
     // Use the shared App Group suite so the Safari extension can read the same data.
     // Falls back to .standard if the App Group isn't registered (e.g., first run on

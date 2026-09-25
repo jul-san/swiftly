@@ -8,9 +8,15 @@
 <body>
 
   <header class="header">
-    <img src="images/icon-48.png" class="logo" alt="">
-    <h1 class="title">Swiftly</h1>
-    <button id="edit-btn" class="header-action hidden">Edit</button>
+    <span class="logo-badge">
+      <img src="images/icon-96.png" class="logo" alt="">
+      <svg class="logo-spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 0l2.4 8.4L22 11l-7.6 2.6L12 22l-2.4-8.4L2 11l7.6-2.6z"/>
+      </svg>
+    </span>
+    <h1 class="title display">Swiftly</h1>
+    <span id="save-status" class="save-status"></span>
+    <button id="nav-btn" class="header-action hidden">Info</button>
   </header>
 
   <main>
@@ -18,147 +24,48 @@
     <!-- Loading -->
     <div id="view-loading">
       <div class="card">
-        <div style="display:flex;align-items:center;gap:8px">
+        <div class="loading-row">
           <div class="loading-dot"></div>
           <span class="state-label">Loading…</span>
         </div>
       </div>
     </div>
 
-    <!-- Setup form -->
-    <div id="view-setup" class="hidden">
-      <div class="card">
-        <p class="setup-hint">Enter your info once — Swiftly will autofill it on Ashby job applications.</p>
-
-        <!-- Name -->
-        <div class="field-group-label">Name</div>
-        <div class="field-row mb10">
-          <input id="f-firstName" class="field-input" type="text" placeholder="First name" autocomplete="given-name" autocorrect="off">
-          <input id="f-lastName"  class="field-input" type="text" placeholder="Last name"  autocomplete="family-name" autocorrect="off">
-        </div>
-
-        <!-- Contact -->
-        <div class="field-group-label">Contact</div>
-        <div class="field-stack mb10">
-          <input id="f-email"    class="field-input" type="email" placeholder="Email"    autocomplete="email" autocorrect="off" autocapitalize="none">
-          <input id="f-phone"    class="field-input" type="tel"   placeholder="Phone"    autocomplete="tel">
-          <input id="f-location" class="field-input" type="text"  placeholder="Location (e.g. San Francisco, CA)" autocorrect="off">
-        </div>
-
-        <!-- Links -->
-        <div class="field-group-label">Links <span class="field-group-optional">optional</span></div>
-        <div class="field-stack mb10">
-          <input id="f-linkedin" class="field-input" type="url" placeholder="LinkedIn URL"     autocorrect="off" autocapitalize="none">
-          <input id="f-github"   class="field-input" type="url" placeholder="GitHub URL"       autocorrect="off" autocapitalize="none">
-          <input id="f-website"  class="field-input" type="url" placeholder="Personal website" autocorrect="off" autocapitalize="none">
-        </div>
-
-        <!-- Work eligibility -->
-        <div class="field-group-label">Work Eligibility <span class="field-group-optional">optional</span></div>
-        <div class="field-stack mb10">
-          <div class="labeled-select">
-            <span class="field-sublabel">Authorized to work in the US?</span>
-            <select id="f-workauth" class="field-select">
-              <option value=""></option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-              <option value="Prefer not to answer">Prefer not to answer</option>
-            </select>
-          </div>
-          <div class="labeled-select">
-            <span class="field-sublabel">Will you require visa sponsorship?</span>
-            <select id="f-sponsorship" class="field-select">
-              <option value=""></option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-              <option value="Prefer not to answer">Prefer not to answer</option>
-            </select>
-          </div>
-          <div class="labeled-select">
-            <span class="field-sublabel">Can you work in-person / from an office?</span>
-            <select id="f-inperson" class="field-select">
-              <option value=""></option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-              <option value="Prefer not to answer">Prefer not to answer</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Demographics -->
-        <div class="field-group-label">Demographics <span class="field-group-optional">optional</span></div>
-        <div class="field-stack mb10">
-
-          <input id="f-pronouns" class="field-input" type="text" placeholder="Pronouns (e.g. she/her)" autocorrect="off">
-
-          <div class="labeled-select">
-            <span class="field-sublabel">Gender identity</span>
-            <select id="f-gender" class="field-select">
-              <option value=""></option>
-              <option value="Man">Man</option>
-              <option value="Woman">Woman</option>
-              <option value="Non-Binary">Non-Binary</option>
-              <option value="Another Gender Identity">Another Gender Identity</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="I prefer not to answer">I prefer not to answer</option>
-              <option value="Decline to self-identify">Decline to self-identify</option>
-            </select>
-          </div>
-
-          <div class="labeled-select">
-            <span class="field-sublabel">Race / Ethnicity <span style="font-size:10px;color:var(--text-tertiary)">(select all that apply)</span></span>
-            <div class="checkbox-group" id="f-race-group">
-              <label class="checkbox-option"><input type="checkbox" value="Asian or Asian American"><span>Asian or Asian American</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="Black or African American"><span>Black or African American</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="Hispanic or Latino"><span>Hispanic or Latino</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="American Indian or Alaska Native"><span>American Indian or Alaska Native</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="Native Hawaiian or Other Pacific Islander"><span>Native Hawaiian or Other Pacific Islander</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="White"><span>White</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="Two or More Races"><span>Two or More Races</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="Other"><span>Other</span></label>
-              <label class="checkbox-option"><input type="checkbox" value="I prefer not to answer"><span>I prefer not to answer</span></label>
-            </div>
-          </div>
-
-          <div class="labeled-select">
-            <span class="field-sublabel">Veteran status</span>
-            <select id="f-veteran" class="field-select">
-              <option value=""></option>
-              <option value="I am not a protected veteran">Not a protected veteran</option>
-              <option value="I identify as one or more of the classifications of protected veteran listed above">Protected veteran</option>
-              <option value="I decline to self-identify for protected veteran status">Decline to self-identify</option>
-            </select>
-          </div>
-
-          <div class="labeled-select">
-            <span class="field-sublabel">Disability status</span>
-            <select id="f-disability" class="field-select">
-              <option value=""></option>
-              <option value="Yes, I Have A Disability, Or Have Had One In The Past">Yes, I have a disability</option>
-              <option value="No, I Don't Have A Disability">No</option>
-              <option value="I Don't Wish To Answer">Prefer not to answer</option>
-            </select>
-          </div>
-
-        </div>
-
-        <!-- Resume -->
-        <div class="field-group-label">Resume <span class="field-group-optional">optional</span></div>
-        <div class="resume-row mb12">
-          <input type="file" id="f-resume-input" accept=".pdf" style="display:none">
-          <button type="button" id="f-resume-btn" class="btn-secondary">Choose PDF…</button>
-          <span id="f-resume-name" class="resume-filename hidden"></span>
-          <button type="button" id="f-resume-clear" class="resume-clear hidden" title="Remove resume">✕</button>
-        </div>
-
-        <p id="setup-error" class="setup-error hidden">First and last name are required.</p>
-        <button id="setup-save" class="btn-primary">Save profile</button>
-      </div>
+    <!-- Info / profile manager -->
+    <div id="view-info" class="hidden">
+      <div id="info-content"></div>
     </div>
 
     <!-- Profile ready + page status -->
     <div id="view-main" class="hidden">
+
+      <div class="hero-card card">
+        <svg class="hero-burst" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0l2.4 8.4L22 11l-7.6 2.6L12 22l-2.4-8.4L2 11l7.6-2.6z"/>
+        </svg>
+        <div class="section-label">Current page</div>
+
+        <div id="page-checking" class="page-state">
+          <span class="hint">Checking this page…</span>
+        </div>
+
+        <div id="page-ashby" class="page-state hidden">
+          <div class="status-row status-page-ready">
+            <span class="dot"></span>
+            <span>Ashby application detected</span>
+          </div>
+          <button id="autofill-btn" class="btn-hero">Autofill with Swiftly</button>
+          <p class="hero-microcopy">Fills what it's confident about. You review the rest.</p>
+        </div>
+
+        <div id="page-other" class="page-state hidden">
+          <div class="status-row status-inactive">
+            <span class="dot"></span>
+            <span>Not an Ashby page</span>
+          </div>
+          <p class="hint">Head to an Ashby job application to use autofill.</p>
+        </div>
+      </div>
 
       <div class="card">
         <div class="status-row status-active">
@@ -169,30 +76,6 @@
         <div id="resume-status" class="resume-status hidden">
           <span class="resume-icon">📄</span>
           <span id="resume-status-name" class="resume-status-text"></span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-label">Current page</div>
-
-        <div id="page-checking" class="page-state">
-          <span class="hint">Checking…</span>
-        </div>
-
-        <div id="page-ashby" class="page-state hidden">
-          <div class="status-row status-page-ready">
-            <span class="dot"></span>
-            <span>Ashby application detected</span>
-          </div>
-          <button id="autofill-btn" class="btn-primary" style="margin-top:4px">Autofill with Swiftly</button>
-        </div>
-
-        <div id="page-other" class="page-state hidden">
-          <div class="status-row status-inactive">
-            <span class="dot"></span>
-            <span>Not an Ashby page</span>
-          </div>
-          <p class="hint">Navigate to an Ashby job application to use autofill.</p>
         </div>
       </div>
 

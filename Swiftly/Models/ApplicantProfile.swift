@@ -16,6 +16,7 @@ struct PersonalInfo: Codable {
     var raceEthnicity: String?
     var workAuthorization: String?
     var requiresSponsorship: String?
+    var inPersonWork: String?
     var veteranStatus: String?
     var disabilityStatus: String?
 
