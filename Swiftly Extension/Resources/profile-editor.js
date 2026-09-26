@@ -46,6 +46,8 @@ export function splitFullName(fullName) {
 const SELF_REPORTED_FIELDS = [
   "workAuthorization", "requiresSponsorship", "inPersonWork", "pronouns",
   "genderIdentity", "raceEthnicity", "veteranStatus", "disabilityStatus",
+  "preferredName", "addressLine1", "city", "state", "postalCode", "country",
+  "willingToRelocate", "earliestStartDate", "desiredSalary", "referralSource",
 ];
 
 export function mergeParsedProfile(prior, parsed) {
@@ -223,8 +225,31 @@ export function renderProfileSections(container, profile, { onChange, personalOp
   }));
   container.append(skillsAcc.section);
 
+  container.append(renderAddressSection(profile.personal, changed));
   container.append(renderWorkEligibilitySection(profile.personal, changed));
   container.append(renderDemographicsSection(profile.personal, changed));
+}
+
+// Structured address for applications that ask for it field by field
+// (Workday, some Greenhouse/Gem forms). "Location" above stays the one-line
+// answer for "Where are you located?" questions.
+function renderAddressSection(p, changed) {
+  const acc = ui.createAccordion({ title: "Address" });
+  const wrap = document.createElement("div");
+  wrap.className = "section-fields";
+  const input = (label, key, placeholder) => ui.labeledInput({
+    label, value: p[key], placeholder,
+    onInput: v => { p[key] = v || null; changed(); },
+  });
+  wrap.append(
+    input("Street address", "addressLine1", "123 Main St"),
+    input("City", "city", "San Francisco"),
+    input("State / province", "state", "CA"),
+    input("ZIP / postal code", "postalCode", "94105"),
+    input("Country", "country", "United States"),
+  );
+  acc.body.append(wrap);
+  return acc.section;
 }
 
 function renderWorkEligibilitySection(p, changed) {
@@ -247,6 +272,23 @@ function renderWorkEligibilitySection(p, changed) {
       label: "Can you work in-person / from an office?", value: p.inPersonWork,
       options: [["", ""], ["Yes", "Yes"], ["No", "No"], ["Prefer not to answer", "Prefer not to answer"]],
       onChange: v => { p.inPersonWork = v || null; changed(); },
+    }),
+    ui.selectField({
+      label: "Willing to relocate?", value: p.willingToRelocate,
+      options: [["", ""], ["Yes", "Yes"], ["No", "No"]],
+      onChange: v => { p.willingToRelocate = v || null; changed(); },
+    }),
+    ui.labeledInput({
+      label: "Earliest start date", value: p.earliestStartDate, placeholder: "June 2027",
+      onInput: v => { p.earliestStartDate = v || null; changed(); },
+    }),
+    ui.labeledInput({
+      label: "Salary expectation", value: p.desiredSalary, placeholder: "Leave blank to answer per application",
+      onInput: v => { p.desiredSalary = v || null; changed(); },
+    }),
+    ui.labeledInput({
+      label: "How you usually find jobs", value: p.referralSource, placeholder: "LinkedIn",
+      onInput: v => { p.referralSource = v || null; changed(); },
     }),
   );
   acc.body.append(wrap);

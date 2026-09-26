@@ -1,0 +1,15 @@
+{
+  "name": "swiftly-extension-tests",
+  "private": true,
+  "description": "Test tooling for the Swiftly Safari extension. Nothing here ships in the extension.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "1.56.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-select": "^5.10.2"
+  }
+}
