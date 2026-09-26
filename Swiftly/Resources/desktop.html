@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="desktop.css">
+</head>
+<body>
+
+  <header class="header">
+    <span class="logo-badge">
+      <img src="icon-96.png" class="logo" alt="">
+      <svg class="logo-spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 0l2.4 8.4L22 11l-7.6 2.6L12 22l-2.4-8.4L2 11l7.6-2.6z"/>
+      </svg>
+    </span>
+    <h1 class="title display">Swiftly</h1>
+    <span id="save-status" class="save-status"></span>
+  </header>
+
+  <main>
+
+    <!-- Loading -->
+    <div id="view-loading">
+      <div class="card">
+        <div class="loading-row">
+          <div class="loading-dot"></div>
+          <span class="state-label">Loading…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile manager -->
+    <div id="info-content" class="hidden"></div>
+
+  </main>
+
+</body>
+<script src="desktop.js" type="module"></script>
+</html>

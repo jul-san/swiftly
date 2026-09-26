@@ -49,10 +49,10 @@
           <span class="hint">Checking this page…</span>
         </div>
 
-        <div id="page-ashby" class="page-state hidden">
+        <div id="page-supported" class="page-state hidden">
           <div class="status-row status-page-ready">
             <span class="dot"></span>
-            <span>Ashby application detected</span>
+            <span id="provider-status-text">Supported application detected</span>
           </div>
           <button id="autofill-btn" class="btn-hero">Autofill with Swiftly</button>
           <p class="hero-microcopy">Fills what it's confident about. You review the rest.</p>
@@ -61,9 +61,9 @@
         <div id="page-other" class="page-state hidden">
           <div class="status-row status-inactive">
             <span class="dot"></span>
-            <span>Not an Ashby page</span>
+            <span>No supported application detected</span>
           </div>
-          <p class="hint">Head to an Ashby job application to use autofill.</p>
+          <p class="hint">Head to an Ashby or Greenhouse job application to use autofill.</p>
         </div>
       </div>
 
@@ -84,5 +84,6 @@
   </main>
 
 </body>
+<script src="autofill/matching.js"></script>
 <script src="popup.js" type="module"></script>
 </html>

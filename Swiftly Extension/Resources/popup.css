@@ -147,7 +147,7 @@ main {
   overflow: visible;
 }
 
-.hero-card:has(#page-ashby:not(.hidden)) {
+.hero-card:has(#page-supported:not(.hidden)) {
   background: var(--brand);
   box-shadow: var(--shadow-md);
 }
@@ -158,11 +158,11 @@ main {
   border-color: var(--line-strong);
 }
 
-.hero-card:has(#page-ashby:not(.hidden)) .section-label,
-.hero-card:has(#page-ashby:not(.hidden)) .hint { color: #ffffff; }
+.hero-card:has(#page-supported:not(.hidden)) .section-label,
+.hero-card:has(#page-supported:not(.hidden)) .hint { color: #ffffff; }
 
-.hero-card:has(#page-ashby:not(.hidden)) .status-page-ready { color: #ffffff; }
-.hero-card:has(#page-ashby:not(.hidden)) .status-page-ready .dot {
+.hero-card:has(#page-supported:not(.hidden)) .status-page-ready { color: #ffffff; }
+.hero-card:has(#page-supported:not(.hidden)) .status-page-ready .dot {
   background: var(--spark);
   box-shadow: 0 0 0 3px rgba(255,255,255,0.35);
 }
@@ -179,7 +179,7 @@ main {
   filter: drop-shadow(1.5px 1.5px 0 var(--ink));
 }
 
-.hero-card:has(#page-ashby:not(.hidden)) .hero-burst { display: block; }
+.hero-card:has(#page-supported:not(.hidden)) .hero-burst { display: block; }
 
 /* ── Status ── */
 .status-row {

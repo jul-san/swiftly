@@ -6,11 +6,12 @@ browser.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 });
 
 async function autofill(profile, resume) {
+  const provider = detectProviderFromHost(location.hostname);
   const personal = profile.personal;
   const fullName = personal.fullName ?? [personal.firstName, personal.lastName].filter(Boolean).join(" ");
   let filled = 0;
 
-  // ── Resume file first — let Ashby parse it and pre-populate fields ────────
+  // ── Resume file first — let the ATS parse it and pre-populate fields ──────
 
   if (resume?.base64) {
     const fileInput = findResumeInput();
@@ -100,16 +101,15 @@ async function autofill(profile, resume) {
       value: personal.disabilityStatus,
       questionSignals: ["disability", "disabled", "disability status"],
     },
-    // EEOC standard system fields (Ashby-specific)
-    {
-      value: personal.genderIdentity,
-      systemFieldSignals: ["_systemfield_eeoc_gender"],
-    },
-    {
-      value: personal.veteranStatus,
-      systemFieldSignals: ["_systemfield_eeoc_veteran_status"],
-    },
   ];
+
+  // EEOC standard system fields — Ashby-specific radio `name` convention.
+  if (provider === "ashby") {
+    radioMappings.push(
+      { value: personal.genderIdentity, systemFieldSignals: ["_systemfield_eeoc_gender"] },
+      { value: personal.veteranStatus, systemFieldSignals: ["_systemfield_eeoc_veteran_status"] },
+    );
+  }
 
   for (const mapping of radioMappings) {
     if (!mapping.value) continue;
@@ -118,28 +118,30 @@ async function autofill(profile, resume) {
     }
   }
 
-  // ── Ashby Yes/No widgets ─────────────────────────────────────────────────
+  // ── Ashby Yes/No widgets (Ashby-specific custom control) ─────────────────
 
-  const yesNoMappings = [
-    {
-      value: personal.workAuthorization,
-      questionSignals: ["authorized to work", "authorized to be employed", "legally authorized", "work authorization", "eligible to work", "right to work"],
-    },
-    {
-      value: personal.requiresSponsorship,
-      questionSignals: ["sponsorship", "visa sponsorship", "require sponsorship", "need sponsorship", "require a visa"],
-    },
-    {
-      value: personal.inPersonWork,
-      questionSignals: ["work from our office", "work from the office", "work in our office", "work in person", "work on site", "work onsite", "days per week", "in-person", "in person"],
-    },
-  ];
+  if (provider === "ashby") {
+    const yesNoMappings = [
+      {
+        value: personal.workAuthorization,
+        questionSignals: ["authorized to work", "authorized to be employed", "legally authorized", "work authorization", "eligible to work", "right to work"],
+      },
+      {
+        value: personal.requiresSponsorship,
+        questionSignals: ["sponsorship", "visa sponsorship", "require sponsorship", "need sponsorship", "require a visa"],
+      },
+      {
+        value: personal.inPersonWork,
+        questionSignals: ["work from our office", "work from the office", "work in our office", "work in person", "work on site", "work onsite", "days per week", "in-person", "in person"],
+      },
+    ];
 
-  for (const { value, questionSignals } of yesNoMappings) {
-    if (!value) continue;
-    if (fillAshbyYesNo(questionSignals, value)) {
-      filled++;
-      await new Promise(r => setTimeout(r, 120)); // React needs a tick between clicks
+    for (const { value, questionSignals } of yesNoMappings) {
+      if (!value) continue;
+      if (fillAshbyYesNo(questionSignals, value)) {
+        filled++;
+        await new Promise(r => setTimeout(r, 120)); // React needs a tick between clicks
+      }
     }
   }
 
@@ -154,8 +156,16 @@ async function autofill(profile, resume) {
     );
     filled += raceFilled;
 
-    // EEOC race system field (single-choice radio — maps multi-select to one category)
-    if (fillEeocRace(raceValues)) filled++;
+    // EEOC race system field (single-choice radio — maps multi-select to one
+    // category). Ashby-specific radio `name` convention.
+    if (provider === "ashby" && fillEeocRace(raceValues)) filled++;
+  }
+
+  // ── Greenhouse structured sections ──────────────────────────────────────
+
+  if (provider === "greenhouse") {
+    filled += fillEducationFields(profile.education);
+    filled += fillExperienceFields(profile.experience);
   }
 
   return { filled };
@@ -209,16 +219,92 @@ function matchesSignals(input, signals) {
     input.placeholder,
     input.getAttribute("aria-label"),
     getLabelText(input),
-  ]
-    .filter(Boolean)
-    .map(s => s.toLowerCase().replace(/[-_\s]/g, ""));
+  ];
+  return matchesSignalList(candidates, signals);
+}
 
-  for (const signal of signals) {
-    const normalized = signal.replace(/[-_\s]/g, "");
-    if (candidates.some(c => c === normalized)) return true;
-    if (normalized.length >= 8 && candidates.some(c => c.includes(normalized))) return true;
+// ─── Select field detection and filling (Greenhouse dropdown questions) ──────
+
+function findSelectField(signals) {
+  for (const select of document.querySelectorAll("select")) {
+    if (matchesSignals(select, signals)) return select;
   }
-  return false;
+  return null;
+}
+
+function fillSelect(select, value) {
+  const optionTexts = Array.from(select.options).map(o => o.textContent ?? "");
+  const idx = pickBestSelectOption(optionTexts, value);
+  if (idx === -1) return false;
+
+  const option = select.options[idx];
+  if (select.value === option.value) return false;
+
+  select.value = option.value;
+  select.dispatchEvent(new Event("input", { bubbles: true }));
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+}
+
+// ─── Greenhouse structured sections ──────────────────────────────────────────
+// First-iteration scope, matching the same philosophy as Ashby's identity
+// fields: map the profile's single most relevant entry into the form's first
+// repeatable block. Additional entries/blocks and date fields (typically
+// separate month/year selects) can be added incrementally once this is
+// reliable — see CLAUDE.md's "add incrementally" guidance for structured
+// education/experience widgets.
+
+function fillEducationFields(education) {
+  const edu = (education ?? [])[0];
+  if (!edu) return 0;
+  let filled = 0;
+
+  const mappings = [
+    { value: edu.institution, signals: ["school", "university", "institution", "college"] },
+    { value: edu.degree, signals: ["degree"] },
+    { value: edu.fieldOfStudy, signals: ["discipline", "field of study", "major"] },
+    { value: edu.gpa, signals: ["gpa", "grade point average"] },
+  ];
+
+  for (const { value, signals } of mappings) {
+    if (!value) continue;
+
+    const select = findSelectField(signals);
+    if (select) {
+      if (!select.value && fillSelect(select, value)) filled++;
+      continue;
+    }
+
+    const input = findTextInput(signals);
+    if (input && !input.value.trim()) {
+      fillInput(input, value);
+      filled++;
+    }
+  }
+
+  return filled;
+}
+
+function fillExperienceFields(experience) {
+  const exp = (experience ?? [])[0];
+  if (!exp) return 0;
+  let filled = 0;
+
+  const mappings = [
+    { value: exp.company, signals: ["employer", "company", "current employer", "current company"] },
+    { value: exp.title, signals: ["job title", "current title", "position"] },
+  ];
+
+  for (const { value, signals } of mappings) {
+    if (!value) continue;
+    const input = findTextInput(signals);
+    if (input && !input.value.trim()) {
+      fillInput(input, value);
+      filled++;
+    }
+  }
+
+  return filled;
 }
 
 function getLabelText(input) {

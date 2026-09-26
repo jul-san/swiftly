@@ -1,0 +1,40 @@
+<!--
+  Sanitized, minimal approximation of a typical Ashby-hosted job application
+  form's DOM shape (*.ashbyhq.com). No real employer content — structure
+  only, kept alongside greenhouse-form.html so provider-specific behavior
+  (the EEOC "_systemfield_eeoc_*" radio names and the custom Yes/No widget)
+  can be told apart from Greenhouse's plain-radio/native-select conventions.
+-->
+<!DOCTYPE html>
+<html>
+<head><title>Ashby application fixture</title></head>
+<body>
+  <form>
+    <label for="_systemfield_name">Full Name</label>
+    <input type="text" id="_systemfield_name" name="_systemfield_name">
+
+    <label for="_systemfield_email">Email</label>
+    <input type="email" id="_systemfield_email" name="_systemfield_email">
+
+    <!-- Pre-filled by the user — Swiftly must not overwrite this. -->
+    <label for="_systemfield_phone">Phone</label>
+    <input type="tel" id="_systemfield_phone" name="_systemfield_phone" value="555-000-1234">
+
+    <label for="_systemfield_resume">Resume</label>
+    <input type="file" id="_systemfield_resume" name="_systemfield_resume">
+
+    <fieldset>
+      <legend>Are you legally authorized to work in the US?</legend>
+      <input type="radio" id="eeoc_gender_a" name="_systemfield_eeoc_gender" value="man">
+      <label for="eeoc_gender_a">Man</label>
+      <input type="radio" id="eeoc_gender_b" name="_systemfield_eeoc_gender" value="woman">
+      <label for="eeoc_gender_b">Woman</label>
+    </fieldset>
+
+    <div class="ashby-application-form-input-yesno" data-field-path="sponsorship">
+      <button type="button" data-option="yes" aria-pressed="false">Yes</button>
+      <button type="button" data-option="no" aria-pressed="false">No</button>
+    </div>
+  </form>
+</body>
+</html>

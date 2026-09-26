@@ -1,0 +1,95 @@
+<!--
+  Sanitized, minimal approximation of a typical Greenhouse-hosted job
+  application form's DOM shape (boards.greenhouse.io / job-boards.greenhouse.io).
+  No real employer content — structure only, for manual inspection and as a
+  reference for future jsdom-based automated tests of content.js.
+
+  Reflects Greenhouse's common conventions:
+    - labeled text inputs for identity fields
+    - a native <select> for Education (School / Degree / Discipline)
+    - a native file input for Resume
+    - a "custom question" free-text field that Swiftly must NOT guess at
+    - a pre-filled field that must not be overwritten
+-->
+<!DOCTYPE html>
+<html>
+<head><title>Greenhouse application fixture</title></head>
+<body>
+  <form id="application_form">
+    <section>
+      <label for="first_name">First Name</label>
+      <input type="text" id="first_name" name="job_application[first_name]">
+
+      <label for="last_name">Last Name</label>
+      <input type="text" id="last_name" name="job_application[last_name]">
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="job_application[email]">
+
+      <label for="phone">Phone</label>
+      <input type="tel" id="phone" name="job_application[phone]">
+
+      <!-- Pre-filled by the user — Swiftly must not overwrite this. -->
+      <label for="location">Location (City)</label>
+      <input type="text" id="location" name="job_application[location]" value="Existing City, ST">
+
+      <label for="resume">Resume/CV</label>
+      <input type="file" id="resume" name="job_application[resume]">
+    </section>
+
+    <section>
+      <!-- LinkedIn/GitHub/Website are usually custom questions, not system fields. -->
+      <label for="question_linkedin">LinkedIn Profile</label>
+      <input type="text" id="question_linkedin" name="job_application_answers_attributes_0_text_value">
+
+      <label for="question_github">GitHub Profile</label>
+      <input type="text" id="question_github" name="job_application_answers_attributes_1_text_value">
+
+      <label for="question_website">Website / Portfolio</label>
+      <input type="text" id="question_website" name="job_application_answers_attributes_2_text_value">
+    </section>
+
+    <section>
+      <h3>Education</h3>
+      <label for="education_school_name_0">School</label>
+      <select id="education_school_name_0" name="education[school_name][0]">
+        <option value=""></option>
+        <option value="1">State University</option>
+        <option value="2">Tech Institute</option>
+      </select>
+
+      <label for="education_degree_0">Degree</label>
+      <select id="education_degree_0" name="education[degree][0]">
+        <option value=""></option>
+        <option value="1">Bachelor's Degree</option>
+        <option value="2">Master's Degree</option>
+        <option value="3">PhD</option>
+      </select>
+
+      <label for="education_discipline_0">Discipline</label>
+      <select id="education_discipline_0" name="education[discipline][0]">
+        <option value=""></option>
+        <option value="1">Computer Science</option>
+        <option value="2">Mathematics</option>
+      </select>
+    </section>
+
+    <section>
+      <!-- A genuinely custom, employer-specific question. Swiftly has no
+           confident mapping for this and must leave it blank. -->
+      <label for="question_custom">Why do you want to work here?</label>
+      <textarea id="question_custom" name="job_application_answers_attributes_3_text_value"></textarea>
+    </section>
+
+    <section>
+      <fieldset>
+        <legend>Are you legally authorized to work in the US?</legend>
+        <input type="radio" id="work_auth_yes" name="work_authorization" value="yes">
+        <label for="work_auth_yes">Yes</label>
+        <input type="radio" id="work_auth_no" name="work_authorization" value="no">
+        <label for="work_auth_no">No</label>
+      </fieldset>
+    </section>
+  </form>
+</body>
+</html>

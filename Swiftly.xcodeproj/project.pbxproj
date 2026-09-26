@@ -38,9 +38,19 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		433D2CBB4203853C425C0374 /* Exceptions for "Swiftly Extension" folder in "Swiftly" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/popup.css,
+				"Resources/profile-format.js",
+				"Resources/profile-ui.js",
+			);
+			target = FF16FC8530645F1B0026F9B6 /* Swiftly */;
+		};
 		93592D5B18BA79D56E97D468 /* Exceptions for "Swiftly" folder in "Swiftly Extension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Bridge/ProfileMessageHandler.swift,
 				Models/ApplicantProfile.swift,
 				Resume/ResumeParser.swift,
 				Resume/ResumeParsingResult.swift,
@@ -78,10 +88,12 @@
 		FF16FCA730645F1C0026F9B6 /* Swiftly Extension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				433D2CBB4203853C425C0374 /* Exceptions for "Swiftly Extension" folder in "Swiftly" target */,
 				FF16FCC130645F1C0026F9B6 /* Exceptions for "Swiftly Extension" folder in "Swiftly Extension" target */,
 			);
 			explicitFolders = (
 				Resources/_locales,
+				Resources/autofill,
 				Resources/images,
 			);
 			path = "Swiftly Extension";
@@ -450,6 +462,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;

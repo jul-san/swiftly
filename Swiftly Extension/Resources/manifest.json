@@ -20,8 +20,11 @@
     },
 
     "content_scripts": [{
-        "js": [ "content.js" ],
-        "matches": [ "*://*.ashbyhq.com/*", "*://ashbyhq.com/*" ]
+        "js": [ "autofill/matching.js", "content.js" ],
+        "matches": [
+            "*://*.ashbyhq.com/*", "*://ashbyhq.com/*",
+            "*://*.greenhouse.io/*", "*://greenhouse.io/*"
+        ]
     }],
 
     "action": {

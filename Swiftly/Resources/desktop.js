@@ -1,25 +1,52 @@
 import * as fmt from "./profile-format.js";
 import * as ui from "./profile-ui.js";
 
-// detectProviderFromHost is defined globally by autofill/matching.js, loaded
-// via a plain <script> tag in popup.html before this module.
+// This mirrors the Safari extension popup's Info/profile view (same profile
+// shape, same accordion-building calls into profile-ui.js/profile-format.js)
+// so the desktop app and the extension present identical profile-editing
+// behavior. The only real difference is the transport below: the extension
+// reaches the native app via `browser.runtime.sendNativeMessage`, while this
+// desktop page *is* the native app's own window, so it talks to Swift
+// directly through a WKScriptMessageHandler.
 
-const PROVIDER_LABELS = { ashby: "Ashby", greenhouse: "Greenhouse" };
+// ─── Native bridge (desktop WKWebView ↔ Swift ProfileMessageHandler) ───────
 
-// ─── Native messaging (bridges to the companion app's parser + storage) ────
+let requestCounter = 0;
+const pending = new Map();
+
+function base64ToJson(base64) {
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+// Called back from Swift (DesktopWebBridge) to resolve a pending nativeMessage().
+window.__swiftlyResolve = (id, resultBase64) => {
+  const resolve = pending.get(id);
+  if (!resolve) return;
+  pending.delete(id);
+  resolve(base64ToJson(resultBase64));
+};
 
 function nativeMessage(action, extra = {}, timeoutMs = 4000) {
-  const request = Promise.resolve(browser.runtime.sendNativeMessage({ action, ...extra }));
+  const id = ++requestCounter;
+  const request = new Promise((resolve) => {
+    pending.set(id, resolve);
+    window.webkit.messageHandlers.swiftlyNative.postMessage({ id, action, ...extra });
+  });
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error(`nativeMessage("${action}") timed out after ${timeoutMs}ms`)), timeoutMs)
   );
   return Promise.race([request, timeout]).catch((err) => {
+    pending.delete(id);
     console.error("[Swiftly]", err);
     throw err;
   });
 }
 
-// ─── Profile state ───────────────────────────────────────────────────────
+// ─── Profile state ─────────────────────────────────────────────────────────
+// Same shape/helpers as the extension popup, so both surfaces read/write an
+// identical ApplicantProfile through the shared App Group store.
 
 function emptyProfile() {
   return {
@@ -51,7 +78,6 @@ function splitFullName(fullName) {
 }
 
 let profile = emptyProfile();
-let resumeMeta = null;
 let resumeStatusMessage = "";
 
 // ─── Autosave ────────────────────────────────────────────────────────────
@@ -64,11 +90,6 @@ function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(persist, 500);
 }
-
-// ─── Accordion missing-field counters ──────────────────────────────────────
-// Populated by renderInfo() with one updater per section; re-run on every
-// field change (via scheduleSave) so counts stay live without re-rendering
-// the whole form (which would drop input focus/cursor position).
 
 const fieldCountUpdaters = {};
 
@@ -101,105 +122,21 @@ init();
 
 async function init() {
   try {
-    const [{ resume }, profileRes] = await Promise.all([
-      browser.storage.local.get("resume").catch(() => ({ resume: null })),
-      nativeMessage("getProfile").catch(() => ({ hasProfile: false })),
-    ]);
-
-    resumeMeta = resume ?? null;
-    if (profileRes?.hasProfile && profileRes.profile) {
-      profile = normalizeProfile(profileRes.profile);
+    const res = await nativeMessage("getProfile");
+    if (res?.hasProfile && res.profile) {
+      profile = normalizeProfile(res.profile);
     }
   } catch (err) {
-    // Never let a boot-time failure leave the popup stuck on "Loading…".
+    // Never let a boot-time failure leave the window stuck on "Loading…".
     console.error("[Swiftly] init failed, starting with an empty profile:", err);
   }
 
   hide("view-loading");
-  show("nav-btn");
-  document.getElementById("nav-btn").addEventListener("click", () => {
-    if (document.getElementById("view-info").classList.contains("hidden")) {
-      showInfo();
-    } else {
-      showHome();
-    }
-  });
-
-  showHome();
-}
-
-function showHome() {
-  hide("view-info");
-  show("view-main");
-  document.getElementById("nav-btn").textContent = "Info";
-  renderHome();
-}
-
-function showInfo() {
-  hide("view-main");
-  show("view-info");
-  document.getElementById("nav-btn").textContent = "Done";
+  show("info-content");
   renderInfo();
 }
 
-// ─── Home view (page status + autofill) ────────────────────────────────────
-
-function renderHome() {
-  document.getElementById("profile-name").textContent = profile.personal.fullName || "";
-
-  if (resumeMeta?.name) {
-    document.getElementById("resume-status-name").textContent = resumeMeta.name;
-    show("resume-status");
-  } else {
-    hide("resume-status");
-  }
-
-  browser.tabs.query({ active: true, currentWindow: true }).then(tabs => {
-    const url = tabs[0]?.url ?? "";
-    const tabId = tabs[0]?.id;
-    hide("page-checking");
-
-    const provider = detectProvider(url);
-    if (provider) {
-      document.getElementById("provider-status-text").textContent =
-        `${PROVIDER_LABELS[provider]} application detected`;
-      show("page-supported");
-      const btn = document.getElementById("autofill-btn");
-      btn.disabled = false;
-      btn.textContent = "Autofill with Swiftly";
-      btn.onclick = () => doAutofill(tabId);
-    } else {
-      show("page-other");
-    }
-  });
-}
-
-async function doAutofill(tabId) {
-  const btn = document.getElementById("autofill-btn");
-  btn.disabled = true;
-  btn.textContent = "Filling…";
-  try {
-    const { resume } = await browser.storage.local.get("resume");
-    const result = await browser.tabs.sendMessage(tabId, {
-      action: "autofill",
-      profile,
-      resume: resume ?? null,
-    });
-    const n = result?.filled ?? 0;
-    btn.textContent = `✓ Filled ${n} field${n === 1 ? "" : "s"}`;
-  } catch {
-    btn.textContent = "Reload the page and try again";
-    btn.disabled = false;
-  }
-}
-
-function detectProvider(url) {
-  try {
-    return detectProviderFromHost(new URL(url).hostname);
-  } catch { return null; }
-}
-
-// ─── Info view (resume upload + accordions) ────────────────────────────────
+// ─── Profile view (resume upload + accordions) ─────────────────────────────
 
 function renderInfo() {
   const container = document.getElementById("info-content");
@@ -216,7 +153,7 @@ function renderInfo() {
     fieldCountUpdaters[key]();
   }
 
-  const personalAcc = ui.createAccordion({ title: "Personal Information" });
+  const personalAcc = ui.createAccordion({ title: "Personal Information", defaultOpen: true });
   personalAcc.body.append(ui.renderPersonalFields(profile.personal, (patch) => {
     Object.assign(profile.personal, patch);
     if ("fullName" in patch) Object.assign(profile.personal, splitFullName(patch.fullName));
@@ -288,6 +225,12 @@ function renderInfo() {
 }
 
 // ─── Resume upload block ────────────────────────────────────────────────────
+// The desktop app doesn't retain the raw resume bytes anywhere (the shared
+// profile store only keeps the parsed, structured profile — see
+// ApplicantProfileStore / CLAUDE.md's "don't store the raw resume
+// indefinitely"), so "is a resume on file" is derived from the profile's own
+// sourceMetadata rather than a separate resume-blob cache like the popup's
+// browser.storage.local.
 
 function renderResumeBlock() {
   const card = document.createElement("div");
@@ -303,18 +246,20 @@ function renderResumeBlock() {
   fileInput.style.display = "none";
   fileInput.addEventListener("change", handleResumeFileChosen);
 
+  const existingName = profile.sourceMetadata?.originalFilename;
+
   const chooseBtn = document.createElement("button");
   chooseBtn.type = "button";
   chooseBtn.className = "btn-secondary";
-  chooseBtn.textContent = resumeMeta?.name ? "Replace…" : "Choose PDF…";
+  chooseBtn.textContent = existingName ? "Replace…" : "Choose PDF…";
   chooseBtn.addEventListener("click", () => fileInput.click());
 
   row.append(fileInput, chooseBtn);
 
-  if (resumeMeta?.name) {
+  if (existingName) {
     const name = document.createElement("span");
     name.className = "resume-filename";
-    name.textContent = resumeMeta.name;
+    name.textContent = existingName;
     const check = document.createElement("span");
     check.className = "resume-check";
     check.textContent = "✓";
@@ -353,14 +298,11 @@ async function handleResumeFileChosen(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  const base64 = await fileToBase64(file);
-  resumeMeta = { name: file.name, base64, type: file.type };
-  await browser.storage.local.set({ resume: resumeMeta });
-
   resumeStatusMessage = "Parsing your resume…";
   renderInfo();
 
   try {
+    const base64 = await fileToBase64(file);
     const res = await nativeMessage("parseResume", { fileName: file.name, base64 });
     if (res?.success && res.profile) {
       // A resume never contains EEOC/demographic answers — carry the user's existing
@@ -383,7 +325,7 @@ async function handleResumeFileChosen(e) {
       resumeStatusMessage = res?.error || "Couldn't parse this resume. You can still fill in your info manually.";
     }
   } catch {
-    resumeStatusMessage = "Couldn't reach Swiftly's parser. You can still fill in your info manually.";
+    resumeStatusMessage = "Couldn't parse this resume right now. You can still fill in your info manually.";
   }
   renderInfo();
 }
@@ -400,7 +342,7 @@ function summarizeParse(p) {
     : "Parsed your resume — review your info below.";
 }
 
-// ─── Work eligibility + demographics (preserved from the original form) ───
+// ─── Work eligibility + demographics (same fields as the extension popup) ──
 
 function renderWorkEligibilitySection() {
   const acc = ui.createAccordion({ title: "Work Eligibility" });
