@@ -8,6 +8,22 @@ export function formatDateRange(start, end, current) {
   return s || e || "";
 }
 
+// ─── Bullet points textarea ───────────────────────────────────────────────
+//
+// Bullets are stored as plain sentences; the editor shows each on its own line
+// behind a "• " marker. Any marker the user types or pastes ("•", "-", "*",
+// "▪", …) is stripped when the text is read back, so it is never saved twice.
+
+const BULLET_MARKER = /^\s*(?:[•·▪◦●■►‣⁃–—*-]|o(?=\s))\s*/u;
+
+export function bulletsToText(bullets) {
+  return (bullets ?? []).map((b) => `• ${(b ?? "").replace(BULLET_MARKER, "")}`).join("\n");
+}
+
+export function textToBullets(text) {
+  return (text ?? "").split("\n").map((line) => line.replace(BULLET_MARKER, "").trimEnd());
+}
+
 // ─── Missing-field counting (accordion header indicator) ──────────────────
 //
 // Only counts user-editable text inputs and bullet textareas — never
