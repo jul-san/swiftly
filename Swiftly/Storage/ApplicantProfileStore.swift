@@ -33,7 +33,7 @@ final class ApplicantProfileStore: ProfileStoring {
     // Use the shared App Group suite so the Safari extension can read the same data.
     // Falls back to .standard if the App Group isn't registered (e.g., first run on
     // a device where the group hasn't been provisioned yet).
-    init(defaults: UserDefaults = UserDefaults(suiteName: "group.repo.Swiftly") ?? .standard) {
+    init(defaults: UserDefaults = UserDefaults(suiteName: "group.com.julsan.Swiftly") ?? .standard) {
         self.defaults = defaults
     }
 
