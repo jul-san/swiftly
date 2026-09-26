@@ -20,6 +20,20 @@ struct PersonalInfo: Codable {
     var veteranStatus: String?
     var disabilityStatus: String?
 
+    // Answers to common application questions. Never parsed from a resume;
+    // only ever entered by the user. All optional, so profiles saved before
+    // these existed still decode unchanged.
+    var preferredName: String?
+    var addressLine1: String?
+    var city: String?
+    var state: String?
+    var postalCode: String?
+    var country: String?
+    var willingToRelocate: String?
+    var earliestStartDate: String?
+    var desiredSalary: String?
+    var referralSource: String?
+
     init(fullName: String = "") {
         self.fullName = fullName
     }

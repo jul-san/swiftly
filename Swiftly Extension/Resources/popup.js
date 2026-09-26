@@ -1,9 +1,8 @@
 import * as editor from "./profile-editor.js";
 
-// detectProviderFromHost is defined globally by autofill/matching.js, loaded
-// via a plain <script> tag in popup.html before this module.
-
-const PROVIDER_LABELS = { ashby: "Ashby", greenhouse: "Greenhouse" };
+// detectProviderFromHost and PROVIDER_LABELS are defined globally by
+// autofill/matching.js, loaded via a plain <script> tag in popup.html before
+// this module.
 
 // ─── Native messaging (bridges to the companion app's parser + storage) ────
 
@@ -112,17 +111,28 @@ function renderHome() {
     hide("resume-status");
   }
 
-  browser.tabs.query({ active: true, currentWindow: true }).then(tabs => {
+  browser.tabs.query({ active: true, currentWindow: true }).then(async tabs => {
     const url = tabs[0]?.url ?? "";
     const tabId = tabs[0]?.id;
+
+    // Ask the page first: the content script also runs inside ATS iframes
+    // embedded on company career sites, where the tab URL isn't an ATS host.
+    const detected = await browser.tabs.sendMessage(tabId, { action: "detect" }).catch(() => null);
+    const provider = detected?.provider ?? detectProvider(url);
     hide("page-checking");
 
-    const provider = detectProvider(url);
     if (provider) {
       document.getElementById("provider-status-text").textContent =
-        `${PROVIDER_LABELS[provider]} application detected`;
+        `${PROVIDER_LABELS[provider] ?? provider} application detected`;
       show("page-supported");
       const btn = document.getElementById("autofill-btn");
+      setAutofillReport(null);
+      if (detected?.blocked) {
+        btn.disabled = true;
+        btn.textContent = "Autofill with Swiftly";
+        setAutofillReport(detected.blocked);
+        return;
+      }
       btn.disabled = false;
       btn.textContent = "Autofill with Swiftly";
       btn.onclick = () => doAutofill(tabId);
@@ -136,6 +146,7 @@ async function doAutofill(tabId) {
   const btn = document.getElementById("autofill-btn");
   btn.disabled = true;
   btn.textContent = "Filling…";
+  setAutofillReport(null);
   try {
     const { resume } = await browser.storage.local.get("resume");
     const result = await browser.tabs.sendMessage(tabId, {
@@ -143,12 +154,35 @@ async function doAutofill(tabId) {
       profile,
       resume: resume ?? null,
     });
-    const n = result?.filled ?? 0;
+    if (!result) throw new Error("no response");
+    if (result.blocked || result.error) {
+      btn.textContent = "Autofill with Swiftly";
+      btn.disabled = false;
+      setAutofillReport(result.blocked || result.error);
+      return;
+    }
+    const n = result.filled ?? 0;
     btn.textContent = `✓ Filled ${n} field${n === 1 ? "" : "s"}`;
+    btn.disabled = false; // multi-step forms (Workday) can be filled again on the next step
+    setAutofillReport(summarizeAttention(result.needsAttention ?? []));
   } catch {
     btn.textContent = "Reload the page and try again";
     btn.disabled = false;
   }
+}
+
+function summarizeAttention(labels) {
+  if (!labels.length) return "Review the form before you submit it.";
+  const shown = labels.slice(0, 4).map(l => l.length > 48 ? `${l.slice(0, 47)}…` : l);
+  const more = labels.length > shown.length ? `, and ${labels.length - shown.length} more` : "";
+  return `Still needs you: ${shown.join("; ")}${more}.`;
+}
+
+function setAutofillReport(text) {
+  const el = document.getElementById("autofill-report");
+  if (!el) return;
+  el.textContent = text ?? "";
+  el.classList.toggle("hidden", !text);
 }
 
 function detectProvider(url) {

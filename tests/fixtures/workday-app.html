@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<!--
+  Workday application-flow fixture (<tenant>.wd5.myworkdayjobs.com/.../apply),
+  reached after sign-in. Emulates the current Workday DOM generation:
+  "section--field" ids with <label for>, data-automation-id containers,
+  button[aria-haspopup=listbox] dropdowns whose listbox is appended to <body>,
+  a searchable multiSelectContainer prompt that searches on Enter, repeatable
+  Work Experience / Education blocks created by "Add" buttons, month/year
+  date parts, a progress bar, and a Next button. Values are recorded only
+  from input/change events (window.__wd), the way React state would be, so a
+  fill that skips events is caught. No employer content.
+-->
+<html><head><meta charset="utf-8"><title>Workday fixture</title>
+<style>.hidden{display:none}</style></head>
+<body>
+<div data-automation-id="applyFlowPage">
+  <ol data-automation-id="progressBar">
+    <li data-step="info"><span>My Information</span></li>
+    <li data-step="exp"><span>My Experience</span></li>
+    <li data-step="questions"><span>Application Questions</span></li>
+  </ol>
+  <div id="step"></div>
+  <button type="button" data-automation-id="bottom-navigation-next-button" id="next">Save and Continue</button>
+</div>
+
+<template id="step-info">
+  <h2>My Information</h2>
+  <div data-automation-id="formField-source">
+    <label for="source--source">How Did You Hear About Us?<abbr title="required">*</abbr></label>
+    <div data-automation-id="multiSelectContainer">
+      <input id="source--source" data-automation-id="searchBox" type="text" placeholder="Search" aria-required="true">
+    </div>
+  </div>
+  <fieldset data-automation-id="formField-candidateIsPreviousWorker">
+    <legend>Have you previously worked for this company?<abbr title="required">*</abbr></legend>
+    <label><input type="radio" name="candidateIsPreviousWorker" value="true"> Yes</label>
+    <label><input type="radio" name="candidateIsPreviousWorker" value="false"> No</label>
+  </fieldset>
+  <div data-automation-id="formField-country">
+    <label for="country--country">Country<abbr title="required">*</abbr></label>
+    <button type="button" id="country--country" aria-haspopup="listbox" data-options="United Kingdom|United States of America|Canada">Select One</button>
+  </div>
+  <div data-automation-id="formField-legalName--firstName">
+    <label for="name--legalName--firstName">First Name<abbr title="required">*</abbr></label>
+    <input id="name--legalName--firstName" type="text" aria-required="true">
+  </div>
+  <div data-automation-id="formField-legalName--lastName">
+    <label for="name--legalName--lastName">Last Name<abbr title="required">*</abbr></label>
+    <input id="name--legalName--lastName" type="text" aria-required="true">
+  </div>
+  <div data-automation-id="formField-preferredCheck">
+    <label><input type="checkbox" id="name--preferredCheck"> I have a preferred name</label>
+  </div>
+  <div data-automation-id="formField-addressLine1">
+    <label for="address--addressLine1">Address Line 1</label>
+    <input id="address--addressLine1" type="text">
+  </div>
+  <div data-automation-id="formField-city">
+    <label for="address--city">City<abbr title="required">*</abbr></label>
+    <input id="address--city" type="text" aria-required="true">
+  </div>
+  <div data-automation-id="formField-countryRegion">
+    <label for="address--countryRegion">State<abbr title="required">*</abbr></label>
+    <button type="button" id="address--countryRegion" aria-haspopup="listbox" data-options="Alabama|California|Colorado|New York">Select One</button>
+  </div>
+  <div data-automation-id="formField-postalCode">
+    <label for="address--postalCode">Postal Code</label>
+    <input id="address--postalCode" type="text">
+  </div>
+  <div data-automation-id="formField-phoneType">
+    <label for="phoneNumber--phoneType">Phone Device Type<abbr title="required">*</abbr></label>
+    <button type="button" id="phoneNumber--phoneType" aria-haspopup="listbox" data-options="Mobile|Landline">Select One</button>
+  </div>
+  <div data-automation-id="formField-phoneNumber">
+    <label for="phoneNumber--phoneNumber">Phone Number<abbr title="required">*</abbr></label>
+    <input id="phoneNumber--phoneNumber" type="text" aria-required="true">
+  </div>
+</template>
+
+<template id="step-exp">
+  <h2>My Experience</h2>
+  <section role="group" aria-labelledby="we-h">
+    <h3 id="we-h">Work Experience</h3>
+    <div id="we-blocks"></div>
+    <button type="button" aria-label="Add Work Experience" data-automation-id="add-button" data-kind="workExperience">Add</button>
+  </section>
+  <section role="group" aria-labelledby="ed-h">
+    <h3 id="ed-h">Education</h3>
+    <div id="ed-blocks"></div>
+    <button type="button" aria-label="Add Education" data-automation-id="add-button" data-kind="education">Add</button>
+  </section>
+  <div data-automation-id="formField-resume">
+    <label for="resumeAttachments--attachments">Resume/CV<abbr title="required">*</abbr></label>
+    <div data-automation-id="file-upload-drop-zone">
+      <input id="resumeAttachments--attachments" data-automation-id="file-upload-input-ref" type="file">
+    </div>
+  </div>
+</template>
+
+<template id="step-questions">
+  <h2>Application Questions</h2>
+  <div data-automation-id="formField-q1">
+    <label for="primaryQuestionnaire--q1">Are you legally authorized to work in the country in which you are applying?<abbr title="required">*</abbr></label>
+    <button type="button" id="primaryQuestionnaire--q1" aria-haspopup="listbox" data-options="Yes|No">Select One</button>
+  </div>
+  <div data-automation-id="formField-q2">
+    <label for="primaryQuestionnaire--q2">Will you now, or in the future, require sponsorship for employment visa status?<abbr title="required">*</abbr></label>
+    <button type="button" id="primaryQuestionnaire--q2" aria-haspopup="listbox" data-options="Yes|No">Select One</button>
+  </div>
+  <div data-automation-id="formField-q3">
+    <label for="primaryQuestionnaire--q3">Are you at least 18 years of age?<abbr title="required">*</abbr></label>
+    <button type="button" id="primaryQuestionnaire--q3" aria-haspopup="listbox" data-options="Yes|No">Select One</button>
+  </div>
+  <div data-automation-id="formField-q4">
+    <label for="primaryQuestionnaire--q4">Are you currently bound by a non-compete agreement?<abbr title="required">*</abbr></label>
+    <button type="button" id="primaryQuestionnaire--q4" aria-haspopup="listbox" data-options="Yes|No">Select One</button>
+  </div>
+  <div data-automation-id="formField-q5">
+    <label for="primaryQuestionnaire--q5">What are your salary expectations?</label>
+    <textarea id="primaryQuestionnaire--q5"></textarea>
+  </div>
+</template>
+
+<script>
+  window.__wd = {};
+  window.__untrustedNext = 0;
+  const steps = ["info", "exp", "questions"];
+  let step = 0;
+  function render() {
+    const host = document.getElementById("step");
+    host.innerHTML = "";
+    host.append(document.getElementById(`step-${steps[step]}`).content.cloneNode(true));
+    for (const li of document.querySelectorAll("[data-automation-id=progressBar] li")) {
+      if (li.dataset.step === steps[step]) li.setAttribute("data-automation-id", "progressBarActiveStep");
+      else li.removeAttribute("data-automation-id");
+    }
+  }
+  render();
+
+  // React-like state capture: only events update the recorded value.
+  document.addEventListener("input", e => { if (e.target.id) window.__wd[e.target.id] = e.target.value; }, true);
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (t.type === "checkbox") window.__wd[t.id] = t.checked;
+    else if (t.type === "radio") window.__wd[t.name] = t.value;
+    else if (t.type === "file") window.__wd[t.id] = t.files[0]?.name;
+    else if (t.id) window.__wd[t.id] = t.value;
+  }, true);
+
+  document.getElementById("next").addEventListener("click", e => {
+    if (!e.isTrusted) { window.__untrustedNext++; return; }
+    step = Math.min(step + 1, steps.length - 1); render();
+  });
+
+  // Listbox buttons: open a listbox appended to <body>.
+  function closeListbox() { document.querySelectorAll("body > ul[role=listbox]").forEach(u => u.remove()); }
+  document.addEventListener("click", e => {
+    const btn = e.target.closest("button[aria-haspopup=listbox]");
+    if (!btn) return;
+    const open = document.querySelector("body > ul[role=listbox]");
+    closeListbox();
+    if (open && open.dataset.owner === btn.id) { btn.removeAttribute("aria-expanded"); return; }
+    const ul = document.createElement("ul"); ul.setAttribute("role", "listbox"); ul.dataset.owner = btn.id;
+    for (const label of btn.dataset.options.split("|")) {
+      const li = document.createElement("li"); li.setAttribute("role", "option");
+      const div = document.createElement("div"); div.textContent = label; li.append(div);
+      li.addEventListener("click", () => { btn.textContent = label; window.__wd[btn.id] = label; closeListbox(); btn.removeAttribute("aria-expanded"); });
+      ul.append(li);
+    }
+    document.body.append(ul);
+    btn.setAttribute("aria-expanded", "true");
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeListbox(); });
+
+  // Searchable prompts: Enter searches, results appear in a body listbox.
+  const PROMPTS = {
+    source: ["LinkedIn", "Indeed", "Company Website", "Employee Referral"],
+    fieldOfStudy: ["Computer Science", "Computer Engineering", "Economics"],
+  };
+  document.addEventListener("keydown", e => {
+    const input = e.target.closest?.("[data-automation-id=multiSelectContainer] input");
+    if (!input || e.key !== "Enter") return;
+    const kind = input.id.includes("fieldOfStudy") ? "fieldOfStudy" : "source";
+    closeListbox();
+    const q = input.value.toLowerCase();
+    const ul = document.createElement("ul"); ul.setAttribute("role", "listbox");
+    setTimeout(() => {
+      for (const label of PROMPTS[kind].filter(l => l.toLowerCase().includes(q))) {
+        const li = document.createElement("li"); li.setAttribute("role", "option");
+        const div = document.createElement("div"); div.setAttribute("data-automation-id", "promptOption"); div.setAttribute("data-automation-label", label); div.textContent = label;
+        li.append(div);
+        li.addEventListener("click", () => {
+          const box = input.closest("[data-automation-id=multiSelectContainer]");
+          const chip = document.createElement("div"); chip.setAttribute("data-automation-id", "selectedItem"); chip.textContent = label;
+          box.parentElement.append(chip);
+          input.value = ""; window.__wd[input.id] = label; closeListbox();
+        });
+        ul.append(li);
+      }
+      document.body.append(ul);
+    }, 120);
+  });
+
+  // "Add" buttons create repeatable blocks with Workday-style ids.
+  let nextId = 7;
+  document.addEventListener("click", e => {
+    const add = e.target.closest("[data-automation-id=add-button]");
+    if (!add) return;
+    const n = nextId++;
+    const kind = add.dataset.kind;
+    const f = (id, label, type = "text", extra = "") => `<div data-automation-id="formField-${id}"><label for="${kind}-${n}--${id}">${label}</label><input id="${kind}-${n}--${id}" type="${type}" ${extra}></div>`;
+    const date = (id, label) => `<div data-automation-id="formField-${id}"><label>${label}</label><div data-automation-id="dateInputWrapper">
+      <input id="${kind}-${n}--${id}-dateSectionMonth-input" data-automation-id="dateSectionMonth-input" aria-label="Month" role="spinbutton" type="text">
+      <input id="${kind}-${n}--${id}-dateSectionYear-input" data-automation-id="dateSectionYear-input" aria-label="Year" role="spinbutton" type="text"></div></div>`;
+    const html = kind === "workExperience"
+      ? `<div data-automation-id="${kind}-${n}"><h4>Work Experience ${n}</h4>
+          ${f("jobTitle", "Job Title*")}${f("companyName", "Company*")}${f("location", "Location")}
+          <div data-automation-id="formField-currentlyWorkHere"><label><input type="checkbox" id="${kind}-${n}--currentlyWorkHere"> I currently work here</label></div>
+          ${date("startDate", "From*")}${date("endDate", "To*")}
+          <div data-automation-id="formField-roleDescription"><label for="${kind}-${n}--roleDescription">Role Description</label><textarea id="${kind}-${n}--roleDescription"></textarea></div></div>`
+      : `<div data-automation-id="${kind}-${n}"><h4>Education ${n}</h4>
+          ${f("schoolName", "School or University*")}
+          <div data-automation-id="formField-degree"><label for="${kind}-${n}--degree">Degree*</label><button type="button" id="${kind}-${n}--degree" aria-haspopup="listbox" data-options="High School Diploma|Associate's Degree|Bachelor's Degree|Master's Degree|Doctorate">Select One</button></div>
+          <div data-automation-id="formField-fieldOfStudy"><label for="${kind}-${n}--fieldOfStudy">Field of Study</label><div data-automation-id="multiSelectContainer"><input id="${kind}-${n}--fieldOfStudy" data-automation-id="searchBox" type="text"></div></div>
+          ${f("gradeAverage", "Overall Result (GPA)")}
+          <div data-automation-id="formField-firstYearAttended"><label>From</label><input id="${kind}-${n}--firstYearAttended-dateSectionYear-input" aria-label="Year" type="text"></div>
+          <div data-automation-id="formField-lastYearAttended"><label>To (Actual or Expected)</label><input id="${kind}-${n}--lastYearAttended-dateSectionYear-input" aria-label="Year" type="text"></div></div>`;
+    document.getElementById(kind === "workExperience" ? "we-blocks" : "ed-blocks").insertAdjacentHTML("beforeend", html);
+  });
+</script>
+</body></html>

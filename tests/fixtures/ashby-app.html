@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<!--
+  Ashby-hosted application fixture (jobs.ashbyhq.com/<org>/<id>/application).
+  Structure follows Ashby's public form conventions: field entries with
+  data-field-path, question-title labels, _systemfield_* system fields, a
+  Yes/No button widget for booleans, radios for small single selects,
+  checkboxes for multi-selects, a typeahead Location combobox that only lists
+  results after typing, EEOC radios, and a separate "Autofill from resume"
+  upload that is NOT the resume answer. The small script emulates the widget
+  behavior (aria-pressed toggles, async location results, a follow-up
+  question that appears after answering the relocation question).
+  No employer content.
+-->
+<html><head><meta charset="utf-8"><title>Ashby fixture</title>
+<style>.hidden{display:none}[role=listbox]{border:1px solid #ccc}</style></head>
+<body>
+<div class="ashby-application-form-container">
+  <div class="ashby-application-form-autofill-input-root">
+    <p>Autofill from resume</p>
+    <input type="file" id="autofill-resume" aria-label="Upload resume to autofill">
+  </div>
+
+  <form>
+    <div class="ashby-application-form-field-entry" data-field-path="_systemfield_name">
+      <label class="ashby-application-form-question-title _required" for="_systemfield_name">Name</label>
+      <input type="text" id="_systemfield_name" name="_systemfield_name" required>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="_systemfield_email">
+      <label class="ashby-application-form-question-title" for="_systemfield_email">Email</label>
+      <input type="email" id="_systemfield_email" name="_systemfield_email" required>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="6b1d0f7e-2c1a-4f7e-9a51-1c0de0000001">
+      <label class="ashby-application-form-question-title" for="6b1d0f7e-2c1a-4f7e-9a51-1c0de0000001">Phone Number</label>
+      <input type="tel" id="6b1d0f7e-2c1a-4f7e-9a51-1c0de0000001" name="6b1d0f7e-2c1a-4f7e-9a51-1c0de0000001" value="+1 555 000 1234">
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="_systemfield_resume">
+      <label class="ashby-application-form-question-title" for="_systemfield_resume">Resume</label>
+      <button type="button">Upload File</button>
+      <input type="file" id="_systemfield_resume" name="_systemfield_resume" style="display:none">
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="_systemfield_location">
+      <label class="ashby-application-form-question-title" for="_systemfield_location">Location</label>
+      <input type="text" id="_systemfield_location" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="loc-listbox" placeholder="Start typing...">
+      <ul id="loc-listbox" role="listbox" class="hidden"></ul>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="7c2e1f8a-0000-4000-8000-000000000002">
+      <label class="ashby-application-form-question-title" for="7c2e1f8a-0000-4000-8000-000000000002">LinkedIn Profile</label>
+      <input type="text" id="7c2e1f8a-0000-4000-8000-000000000002">
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="7c2e1f8a-0000-4000-8000-000000000003">
+      <label class="ashby-application-form-question-title" for="7c2e1f8a-0000-4000-8000-000000000003">GitHub or portfolio link</label>
+      <input type="text" id="7c2e1f8a-0000-4000-8000-000000000003">
+    </div>
+
+    <div class="ashby-application-form-field-entry" data-field-path="q-auth">
+      <label class="ashby-application-form-question-title">Are you legally authorized to work in the United States?</label>
+      <div class="ashby-application-form-input-yesno _yesno">
+        <button type="button" class="_option" aria-pressed="false">Yes</button>
+        <button type="button" class="_option" aria-pressed="false">No</button>
+      </div>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="q-sponsor">
+      <label class="ashby-application-form-question-title">Will you now or in the future require sponsorship for employment visa status (e.g. H-1B)?</label>
+      <div class="ashby-application-form-input-yesno _yesno">
+        <button type="button" class="_option" aria-pressed="false">Yes</button>
+        <button type="button" class="_option" aria-pressed="false">No</button>
+      </div>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="q-uk-auth">
+      <label class="ashby-application-form-question-title">Do you have the right to work in the United Kingdom?</label>
+      <div class="ashby-application-form-input-yesno _yesno">
+        <button type="button" class="_option" aria-pressed="false">Yes</button>
+        <button type="button" class="_option" aria-pressed="false">No</button>
+      </div>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="q-relocate">
+      <fieldset>
+        <legend class="ashby-application-form-question-title">Are you open to relocating to New York?</legend>
+        <label><input type="radio" name="q-relocate" value="a"> Yes</label>
+        <label><input type="radio" name="q-relocate" value="b"> No</label>
+        <label><input type="radio" name="q-relocate" value="c"> Open to discussion</label>
+      </fieldset>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="q-office">
+      <fieldset>
+        <legend class="ashby-application-form-question-title">This role is in-office three days a week. Are you able to work from our office?</legend>
+        <label><input type="radio" name="q-office" value="y"> Yes</label>
+        <label><input type="radio" name="q-office" value="n"> No</label>
+      </fieldset>
+    </div>
+    <div id="followups"></div>
+    <div class="ashby-application-form-field-entry" data-field-path="q-why">
+      <label class="ashby-application-form-question-title" for="q-why-input">What excites you about this role?</label>
+      <textarea id="q-why-input"></textarea>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="q-salary">
+      <label class="ashby-application-form-question-title" for="q-salary-input">What are your salary expectations?</label>
+      <input type="text" id="q-salary-input">
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="_systemfield_eeoc_gender">
+      <fieldset>
+        <legend class="ashby-application-form-question-title">Gender</legend>
+        <label><input type="radio" name="_systemfield_eeoc_gender" value="Male"> Male</label>
+        <label><input type="radio" name="_systemfield_eeoc_gender" value="Female"> Female</label>
+        <label><input type="radio" name="_systemfield_eeoc_gender" value="Decline"> Decline to self-identify</label>
+      </fieldset>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="_systemfield_eeoc_race">
+      <fieldset>
+        <legend class="ashby-application-form-question-title">Race</legend>
+        <label><input type="radio" name="_systemfield_eeoc_race" value="1"> Hispanic or Latino</label>
+        <label><input type="radio" name="_systemfield_eeoc_race" value="2"> White (Not Hispanic or Latino)</label>
+        <label><input type="radio" name="_systemfield_eeoc_race" value="3"> Asian (Not Hispanic or Latino)</label>
+        <label><input type="radio" name="_systemfield_eeoc_race" value="4"> Two or More Races (Not Hispanic or Latino)</label>
+        <label><input type="radio" name="_systemfield_eeoc_race" value="5"> Decline to self-identify</label>
+      </fieldset>
+    </div>
+    <div class="ashby-application-form-field-entry" data-field-path="q-ack">
+      <label><input type="checkbox" id="q-ack-box"> I acknowledge that the information I provided is accurate.</label>
+    </div>
+    <button type="submit" class="ashby-application-form-submit-button">Submit Application</button>
+  </form>
+</div>
+<script>
+  window.__submits = 0;
+  document.querySelector("form").addEventListener("submit", e => { e.preventDefault(); window.__submits++; });
+  for (const group of document.querySelectorAll("._yesno")) {
+    group.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      for (const x of group.querySelectorAll("button")) { x.setAttribute("aria-pressed", String(x === b)); x.classList.toggle("_active", x === b); }
+    });
+  }
+  // Answering the relocation question reveals a follow-up, as Ashby's conditional questions do.
+  document.addEventListener("change", e => {
+    if (e.target.name === "q-relocate" && !document.getElementById("q-start")) {
+      document.getElementById("followups").insertAdjacentHTML("beforeend",
+        '<div class="ashby-application-form-field-entry" data-field-path="q-start"><label class="ashby-application-form-question-title" for="q-start">When is the earliest you could start?</label><input type="text" id="q-start"></div>');
+    }
+  });
+  // Location typeahead: results only appear after typing, like Ashby's.
+  const loc = document.getElementById("_systemfield_location");
+  const list = document.getElementById("loc-listbox");
+  const CITIES = ["San Francisco, California, United States", "San Francisco de Macorís, Dominican Republic", "Santa Fe, New Mexico, United States"];
+  loc.addEventListener("input", () => {
+    list.innerHTML = "";
+    const q = loc.value.trim().toLowerCase();
+    if (q.length < 2) { list.classList.add("hidden"); loc.setAttribute("aria-expanded", "false"); return; }
+    setTimeout(() => {
+      for (const c of CITIES.filter(c => c.toLowerCase().startsWith(q))) {
+        const li = document.createElement("li"); li.setAttribute("role", "option"); li.textContent = c;
+        li.addEventListener("click", () => { loc.value = c; loc.dataset.selected = c; list.classList.add("hidden"); loc.setAttribute("aria-expanded", "false"); });
+        list.append(li);
+      }
+      list.classList.remove("hidden"); loc.setAttribute("aria-expanded", "true");
+    }, 150);
+  });
+</script>
+</body></html>

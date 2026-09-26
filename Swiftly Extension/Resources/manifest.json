@@ -20,11 +20,25 @@
     },
 
     "content_scripts": [{
-        "js": [ "autofill/matching.js", "content.js" ],
+        "js": [
+            "autofill/matching.js",
+            "autofill/catalog.js",
+            "autofill/detector.js",
+            "autofill/filler.js",
+            "autofill/engine.js",
+            "autofill/adapters/greenhouse.js",
+            "autofill/adapters/ashby.js",
+            "autofill/adapters/gem.js",
+            "autofill/adapters/workday.js",
+            "content.js"
+        ],
         "matches": [
             "*://*.ashbyhq.com/*", "*://ashbyhq.com/*",
-            "*://*.greenhouse.io/*", "*://greenhouse.io/*"
-        ]
+            "*://*.greenhouse.io/*", "*://greenhouse.io/*",
+            "*://jobs.gem.com/*",
+            "*://*.myworkdayjobs.com/*", "*://*.myworkdaysite.com/*"
+        ],
+        "all_frames": true
     }],
 
     "action": {

@@ -23,3 +23,7 @@ DerivedData/
 # CocoaPods / Carthage
 Pods/
 Carthage/Build/
+
+# Node test tooling
+node_modules/
+tests/.build/

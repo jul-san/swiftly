@@ -216,6 +216,10 @@ export function renderPersonalFields(personal, onPatch) {
       onInput: (v) => onPatch({ fullName: v }),
     }),
     labeledInput({
+      label: "Preferred first name", value: personal.preferredName, placeholder: "Optional",
+      onInput: (v) => onPatch({ preferredName: v || null }),
+    }),
+    labeledInput({
       label: "Email", value: personal.email, placeholder: "jordan@email.com", type: "email",
       onInput: (v) => onPatch({ email: v }),
     }),
