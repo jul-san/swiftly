@@ -22,6 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
     private let bridge = DesktopWebBridge()
     private let resourceHandler = AppResourceSchemeHandler()
+    private let filePicker = FilePickerUIDelegate()
 
     // AppKit's `@main` default implementation for NSApplicationDelegate is only
     // `exit(NSApplicationMain(...))`, and NSApplicationMain installs a delegate
@@ -76,6 +77,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // to start: the web view then renders nothing (an empty gray window) and
         // reports `webViewWebContentProcessDidTerminate` immediately.
         let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 720, height: 820), configuration: configuration)
+        // Without a UI delegate, the resume card's file inputs do nothing.
+        webView.uiDelegate = filePicker
 
         let newWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 820),
