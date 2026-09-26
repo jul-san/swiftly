@@ -295,18 +295,37 @@ test("Duplicate entries are dropped and pronouns don't break the name") {
     expect(p.experience.count, 1, "duplicate removed")
 }
 
-test("Text with no education or experience is an error, not a crash") {
-    switch ResumeParser().parse(text: "Just a name\nand a line of text") {
-    case .success: expect(false, true, "should fail")
-    case .failure(let error):
-        if case .insufficientData = error { expect(true, true, "insufficient data") }
-        else { expect("\(error)", "insufficientData", "error kind") }
-    }
+test("A resume with no recognizable sections still returns what was found") {
+    let text = """
+    Drew Park
+    drew@example.com | 555-010-9911
+    Things I have done
+    Built a bike.
+    """
+    guard let result = parse(text) else { return }
+    expect(result.profile.personal.fullName, "Drew Park", "name")
+    expect(result.profile.personal.email, "drew@example.com", "email")
+    expect(result.profile.experience.isEmpty && result.profile.education.isEmpty, true, "nothing invented")
+    expect(result.warnings.contains("Could not find education or experience sections."), true, "warning for review")
+
     switch ResumeParser().parse(text: "   \n  ") {
-    case .success: expect(false, true, "should fail")
+    case .success: expect(false, true, "empty text should fail")
     case .failure(let error):
         if case .noExtractableText = error { expect(true, true, "no text") }
         else { expect("\(error)", "noExtractableText", "error kind") }
+    }
+}
+
+test("Of two readings of the same PDF, the cleaner parse wins") {
+    let columns = (try? String(contentsOf: fixturesDirectory.appendingPathComponent("jakes-resume.txt"), encoding: .utf8)) ?? ""
+    // The same resume as PDFKit's plain text might give it: the right-hand column folded
+    // into the row with a space instead of a tab.
+    let flattened = columns.replacingOccurrences(of: "\t", with: " ")
+    for texts in [[columns, flattened], [flattened, columns]] {
+        guard case .success(let result) = ResumeParser().parse(texts: texts) else {
+            expect(false, true, "parse(texts:) failed"); continue
+        }
+        expect(result.profile.experience.first?.location, "College Station, TX", "column reading chosen")
     }
 }
 

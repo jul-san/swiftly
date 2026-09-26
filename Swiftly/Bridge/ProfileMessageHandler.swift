@@ -74,15 +74,26 @@ struct ProfileMessageHandler {
             return ["success": false, "error": "The uploaded file could not be read."]
         }
 
-        let text: String
-        switch ResumeTextExtractor().extract(from: tempURL) {
+        let texts: [String]
+        switch ResumeTextExtractor().extractCandidates(from: tempURL) {
         case .success(let extracted):
-            text = extracted
+            texts = extracted
         case .failure(let error):
             return ["success": false, "error": error.localizedDescription]
         }
 
-        switch ResumeParser().parse(text: text, filename: fileName) {
+        #if DEBUG
+        // Which reading of the PDF parsed best, without logging any resume content.
+        for (index, text) in texts.enumerated() {
+            if case .success(let r) = ResumeParser().parse(text: text, filename: fileName) {
+                print("[Swiftly] resume reading \(index): \(text.split(separator: "\n").count) lines, "
+                      + "\(r.profile.education.count) education, \(r.profile.experience.count) experience, "
+                      + "\(r.profile.projects.count) projects, warnings: \(r.warnings)")
+            }
+        }
+        #endif
+
+        switch ResumeParser().parse(texts: texts, filename: fileName) {
         case .success(let result):
             do {
                 try store.saveProfile(result.profile)

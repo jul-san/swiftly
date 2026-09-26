@@ -96,8 +96,10 @@ struct ResumeParser {
             warnings.append("Some experience entries are missing a company or title.")
         }
 
+        // Whatever was found is still worth keeping: the user fills in the rest when they
+        // review the profile.
         if experience.isEmpty && education.isEmpty {
-            return .failure(.insufficientData("no experience or education sections found"))
+            warnings.append("Could not find education or experience sections.")
         }
 
         var profile = ApplicantProfile(
@@ -110,6 +112,58 @@ struct ResumeParser {
         profile.skills = skills
 
         return .success(ResumeParsingResult(profile: profile, warnings: warnings))
+    }
+
+    // Parses each reading of the same resume (see ResumeTextExtractor.extractCandidates)
+    // and keeps the one that recovered the most, preferring the earlier on a tie.
+    nonisolated func parse(texts: [String], filename: String? = nil) -> Result<ResumeParsingResult, ParsingError> {
+        var best: (result: ResumeParsingResult, score: Int)?
+        var firstError: ParsingError?
+        for text in texts {
+            switch parse(text: text, filename: filename) {
+            case .success(let result):
+                let score = completenessScore(result.profile)
+                if best == nil || score > best!.score { best = (result, score) }
+            case .failure(let error):
+                firstError = firstError ?? error
+            }
+        }
+        if let best = best { return .success(best.result) }
+        return .failure(firstError ?? .noExtractableText)
+    }
+
+    // How much of a usable profile a parse recovered. Only entries whose key fields all
+    // came out count in full, so a reading that splits one job into several fragments
+    // doesn't outscore one that parsed it cleanly.
+    func completenessScore(_ profile: ApplicantProfile) -> Int {
+        var score = 0
+        for job in profile.experience {
+            let complete = !job.company.isEmpty && !job.title.isEmpty && job.startDate != nil
+            score += complete ? 10 : -2
+            score += job.location == nil ? 0 : 2
+            // Stray bullet fragments collected as teams are a sign the rows were misread.
+            score -= max(0, job.teamsOrGroups.count - 2)
+        }
+        for school in profile.education {
+            let dated = school.graduationDate != nil || school.endDate != nil || school.startDate != nil
+            let complete = !school.institution.isEmpty && school.degree != nil && dated
+            score += complete ? 10 : -2
+            score += school.location == nil ? 0 : 2
+        }
+        for project in profile.projects {
+            // A wrapped bullet misread as a project header reads like a sentence.
+            let name = project.name
+            let words = name.split(separator: " ").count
+            let looksLikeName = words <= 8 && !name.hasSuffix(".") && !isDate(name)
+                && name.first.map { $0.isUppercase || $0.isNumber } == true
+            score += looksLikeName && !project.bullets.isEmpty ? 5 : -2
+        }
+        let personal = profile.personal
+        let contact: [String?] = [personal.email, personal.phone, personal.linkedinURL,
+                                  personal.githubURL, personal.website]
+        score += contact.compactMap { $0 }.count
+        score += personal.fullName.isEmpty ? 0 : 3
+        return score
     }
 
     // MARK: - Normalization
