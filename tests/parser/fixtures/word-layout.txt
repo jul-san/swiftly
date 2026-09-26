@@ -1,0 +1,31 @@
+Morgan Lee
+morgan.lee@example.org | Denver, CO | (555) 010 4455 | morganlee.me | linkedin.com/in/morgan-lee/
+Education
+Front Range University	Expected May 2031
+Bachelor of Science in Computer Science	Denver, CO
+o  Awards: 2x Robotics Challenge Finalist (Spring 2028-Novice Track, Spring 2029-Open Track),
+Robotics Challenge 5th Place (Fall 2028-Open Track), State Academic Scholarship.
+o  Relevant Coursework: Data Structures and Algorithms, Operating Systems, Computer Architecture.
+Lakeside Polytechnic Institute	February 2030 – June 2030
+Exchange Program in Engineering and Computer Science	Kyoto, Japan
+Experience
+Mesa Applied Research Center	Summer 2031 (May – August)
+Incoming Software Engineering Intern – Secure Communications	Austin, TX
+o  Java and SQL development for the secure communications group.
+Northwind Pharma	June 2030 – August 2030
+Software Engineering Intern – AI Search (patientguide.example.com)	Boston, MA
+o  Built a Python tool that tags incoming support tickets by product area.
+o Added a review queue so analysts can correct tags before they are saved.
+Summit Aerospace	May 2029 – August 2029
+Software Engineering Intern – Systems Engineering Group, Flight Test	Huntsville, AL
+o  Built a C# utility that validates sensor calibration files before each test run.
+Projects
+Chess CLI | C++20	December 2030 – Present
+o  Rebuilt a classic board game in C++ with an object-oriented model of pieces and rules.
+Pocket Deck | Raspberry Pi 5, Linux (Ubuntu), AutoCAD, 3D Printing	December 2030 – Present
+o  Building a handheld weather station powered by a Raspberry Pi 5.
+Technical Skills and Interests
+o  Languages: C++, C, Python, Java, TypeScript, SQL
+o  Frameworks: React, Next.js, Django, NumPy, Pandas
+o  Tools: Git, Docker, Node.js, Atlassian Suite (Jira, BitBucket, Confluence, etc.), CMake
+o  Interests: Photography (Landscape), Cooking (Curry)

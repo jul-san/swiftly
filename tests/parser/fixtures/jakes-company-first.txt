@@ -1,0 +1,40 @@
+ALEX RIVERA
+(555)-010-2233 | alex.rivera@example.com | linkedin.com/in/alex-rivera-dev | github.com/alexrivera-dev | alexrivera.dev
+Open to Remote and Hybrid Roles
+EDUCATION
+Gulf Coast State University	Pensacola, FL
+B.S. in Computer Science	Expected December 2031
+Northern Lights University	Oslo, Norway
+Exchange Semester in Computer Science	March 2029 – June 2029
+EXPERIENCE
+Harbor Analytics	Pensacola, FL
+Software Test Engineering Intern	October 2029 – Present
+• Writing integration tests in Java and Python for web, ﬁrmware, and device software.
+Bluewater Health	Chicago, IL
+Software Engineering Intern	June 2029 – August 2029
+• Built a Python scheduling assistant for clinic staff, cutting appointment double-bookings by a third using a shared
+calendar service and nightly conflict reports.
+• Built an intake form pipeline that validates 5,000+ weekly submissions and routes incomplete ones back to the right
+front-desk queue.
+• Built a Vue mobile view of the schedule for 2,000 staff.
+Cedar Research Lab	Boulder, CO
+Software Development Intern	May 2028 – August 2028
+• Sped up soil sample reports in Python with Pandas and NumPy by 60% by replacing spreadsheet macros with a small
+command-line tool.
+• Wrote PyTest suites for the report tool.
+PROJECTS
+BookSwap	August 2029
+• Built a React app that lets students swap used textbooks by posting listings, messaging sellers, and arranging
+pickups on campus.
+• Stored listings and messages in PostgreSQL.
+LEADERSHIP
+Society of Student Engineers	Pensacola, FL
+Outreach Committee Founding Member	August 2029 – Present
+• Organized 6 industry panels for members.
+Vice President, Internal	August 2027 – May 2028
+• Managed the chapter's event calendar.
+SKILLS, TECHNOLOGIES, AWARDS, AND INTERESTS
+Skills: C++, Python, Java, TypeScript, SQL, C
+Technologies: Angular, React, Next.js, MongoDB, Django, Docker, AWS
+Awards: Merit Scholarship (full tuition), Hackathon Runner-Up, Dean’s List.
+Interests: Hiking, Table Tennis, Cooking (and eating).

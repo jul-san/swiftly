@@ -1,0 +1,29 @@
+Sam Patel	sam.patel@example.net samp.me
+Open to Relocation | Backend, Data Tools, Prototyping	linkedin.com/in/sam-patel
+Education
+Prospective Master’s Degree in Computer Science (Part-time)	Expected Start Aug 2032
+Great Plains University - B.S. Computer Science	Expected Grad May 2032
+● Awards: Merit Scholarship (full-tuition, ~$20,000), 2x 3rd Place at Regional Hackathon
+Experience
+Orbital Robotics – Software Engineering Intern – Portland, OR	Aug 2031 – Present
+● Designing a scheduling service in Go to group delivery routes and reduce empty truck miles across regions.
+● Using Kafka for event delivery between services, with retries and dead-letter queues for failed messages.
+Riverside Applied Physics Center – Software Engineering Intern – Richmond, VA	May 2031 – Aug 2031
+Defense Systems Sector (DSS) - Command Communications Group (CCG)
+● Built a Kotlin service that ingests sensor readings and streams live summaries to an operator dashboard page.
+● Wrote Terraform modules to provision the test environment, replacing a manual setup checklist.
+Space Systems Sector (SSS) - Ground Applications Group (GAG)
+● Migrated a legacy telemetry parser from Perl to Python with full regression tests, enabling automated workﬂows for
+nightly data checks, alerting, and weekly reports reviewed by the operations team.
+Evergreen Biotech – Software Engineering Intern – Seattle, WA	Jun 2030 – Aug 2030
+● Prototyped a Flask tool that flags duplicate lab records before they reach the shared inventory database.
+Selected Projects
+Matrixy – Rust	GitHub
+● Wrote a small matrix library with ﬂat storage, implementing decompositions (QR, LU) and linear solvers.
+Chess CLI  – C++20	GitHub
+● Implemented a terminal chess game with move validation.
+Skills and Interests
+● Languages: C++, Python, Java, Rust, C#/.NET, TypeScript
+● Tools/Technologies: Git, GitHub, Docker, PostgreSQL, MongoDB, Vim, Tmux, Atlassian Suite
+● Frameworks/Libraries: LangChain, Streamlit, Ollama, ReactJS, AngularJS, Tailwind, Pandas
+● Interests: Solo Travel, Landscape Photography, Pickleball
