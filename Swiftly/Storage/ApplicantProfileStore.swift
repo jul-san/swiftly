@@ -11,6 +11,11 @@ final class ApplicantProfileStore: ProfileStoring {
     // Key includes schema version so stale data is ignored after a model change.
     private static let defaultsKey = "com.swiftly.applicantProfile.v1"
 
+    // The App Group both the app and the Safari extension are entitled to (see
+    // Swiftly.entitlements / Swiftly Extension.entitlements). Its UserDefaults
+    // suite is the single source of truth for the profile on both surfaces.
+    static let appGroupID = "group.repo.Swiftly"
+
     private let defaults: UserDefaults
     private let encoder = ApplicantProfileStore.makeEncoder()
     private let decoder = ApplicantProfileStore.makeDecoder()
@@ -33,7 +38,7 @@ final class ApplicantProfileStore: ProfileStoring {
     // Use the shared App Group suite so the Safari extension can read the same data.
     // Falls back to .standard if the App Group isn't registered (e.g., first run on
     // a device where the group hasn't been provisioned yet).
-    init(defaults: UserDefaults = UserDefaults(suiteName: "group.repo.Swiftly") ?? .standard) {
+    init(defaults: UserDefaults = UserDefaults(suiteName: ApplicantProfileStore.appGroupID) ?? .standard) {
         self.defaults = defaults
     }
 

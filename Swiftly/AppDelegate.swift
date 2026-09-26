@@ -8,11 +8,11 @@
 import Cocoa
 import WebKit
 
-// The Swiftly desktop app: a normal windowed application exposing the same
-// profile-management functionality as the Safari extension popup. The window's
+// The Swiftly desktop app: a normal windowed application with a home screen
+// and the same profile editor as the Safari extension popup. The window's
 // content is Resources/desktop.html, which reuses the popup's own CSS and
-// profile-rendering JS (profile-format.js / profile-ui.js) so both surfaces
-// share one visual language and one DOM-building layer. Profile reads/writes
+// profile editor (profile-editor.js, built on profile-ui.js / profile-format.js)
+// so both surfaces share one visual language and one editing layer. Profile reads/writes
 // go through DesktopWebBridge -> ProfileMessageHandler -> the shared App Group
 // ApplicantProfileStore, so the desktop app and the Safari extension operate
 // on the same profile.
@@ -92,8 +92,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // reopen; without this, AppKit's default release-on-close would free
         // it out from under that strong reference.
         newWindow.isReleasedWhenClosed = false
-        newWindow.makeKeyAndOrderFront(nil)
         self.window = newWindow
+
+        // The window outlives any one editing session, and the user can edit
+        // the same profile in the Safari extension in between. Each time the
+        // window comes forward, have the page re-read the shared store (see
+        // `__swiftlyRefresh` in desktop.js) so it never edits a stale copy.
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: newWindow,
+            queue: .main
+        ) { [weak webView] _ in
+            MainActor.assumeIsolated {
+                webView?.evaluateJavaScript("window.__swiftlyRefresh && window.__swiftlyRefresh();")
+            }
+        }
+
+        newWindow.makeKeyAndOrderFront(nil)
 
         // Loaded over AppResourceSchemeHandler.scheme rather than as a file URL
         // so the page has a real origin and its ES modules can load.
