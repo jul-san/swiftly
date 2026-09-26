@@ -3,7 +3,8 @@
   "private": true,
   "description": "Test tooling for the Swiftly Safari extension. Nothing here ships in the extension.",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:parser": "bash tests/parser/run.sh"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

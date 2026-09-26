@@ -1,0 +1,31 @@
+[Name Redacted]
+U.S. Citizen
+Education
+Ivy League University	Northeast US
+B.S. Electrical Engineering and Computer Science.	(GPA 3.80/4.00)	May 2032
+• Selective merit award (∼1% selection rate), Departmental Fellowship, Summer Research Grant
+• Relevant Coursework: Data Structures, Algorithms, Systems Programming, Distributed Systems, Databases, Probability
+Theory, Linear Algebra, Discrete Math, Digital Logic Design, Embedded Systems
+Experience
+Machine Learning Researcher | Python, PyTorch, OpenCV, Linux (GPU Cluster)	May 2030 – Aug 2030
+Large Public Research University	Asia
+• Built the image labeling component for a distributed crop-monitoring system, helping field teams prioritize
+irrigation checks across 400 farm plots.
+• Automated leaf-damage detection across 9,000 drone images using OpenCV.
+Software Engineer | Python, FastAPI, PostgreSQL, Docker, React	Aug 2029 – Dec 2029
+Early-Stage Startup — Venture-Backed	California
+• Cut page load time by 40% by caching search results behind a FastAPI endpoint.
+Undergraduate Researcher | Python, C, NumPy	Apr 2029 – Aug 2029
+University School of Engineering and Applied Science	Northeast US
+• Built a low-cost air-quality sensor array using Raspberry Pi.
+Projects
+Transit Delay Tracker (Startup Project) | Python, FastAPI, PostgreSQL, S3 (boto3)	2030
+• Built a pipeline that ingests bus GPS feeds and predicts arrival delays.
+Systems Programming Projects | C, C++, BASIC	2030
+• Toy Compiler: Wrote a recursive-descent compiler for a small BASIC dialect in C++.
+• Unix Shell: Built a shell supporting pipelines and job control.
+Technical Skills
+Languages: C, C++, Java, Python, x86-64 Assembly, SQL, TypeScript, JavaScript, Verilog
+Frameworks: FastAPI, React, Node.js, Next.js, TailwindCSS
+Tools: GDB, Valgrind, Git, Docker, PostgreSQL, Linux (Daily User), Bash, VS Code, tmux
+Libraries: NumPy, Pandas, scikit-learn, PyTorch, OpenCV
