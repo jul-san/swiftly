@@ -42,6 +42,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/popup.css,
+				"Resources/profile-editor.js",
 				"Resources/profile-format.js",
 				"Resources/profile-ui.js",
 			);

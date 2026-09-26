@@ -1,29 +1,161 @@
-/* Desktop-only layout overrides.
+/* Desktop-only layout.
  *
  * popup.css (shared verbatim with the Safari extension) defines every visual
  * token and component — colors, cards, accordions, buttons, inputs. This file
- * only widens the popup's fixed 440px layout into a comfortable centered
- * column for a resizable desktop window; it must not redefine any component
- * styling, so the two surfaces stay visually identical.
+ * only lays those components out for a resizable desktop window and scales
+ * them up a little for the extra room. It must not introduce new colors or
+ * component treatments, so the app and the extension stay one visual family.
  */
 
 html, body {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   width: auto;
   min-width: 420px;
+  font-size: 14px;
   background: var(--paper);
 }
 
-.header {
-  padding: 16px 28px;
+.desktop-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 28px 32px 64px;
+  width: 100%;
 }
 
-main {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 20px 28px 56px;
-  width: 100%;
+/* ── Home ── */
+
+.home-page {
+  max-width: 560px;
+  padding-top: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.home-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.home-logo-badge,
+.home-logo-badge .logo {
+  width: 112px;
+  height: 112px;
+}
+
+.home-logo-badge .logo {
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow-md);
+}
+
+.home-logo-badge .logo-spark {
+  top: -10px;
+  right: -12px;
+  width: 34px;
+  height: 34px;
+  color: var(--spark);
+  filter: drop-shadow(2px 2px 0 var(--ink));
+}
+
+.home-title {
+  font-size: 44px;
+  letter-spacing: -0.8px;
+  line-height: 1;
+}
+
+/* The home card always wears the extension's "ready" hero treatment. */
+.home-profile-card {
+  background: var(--brand);
+  box-shadow: var(--shadow-md);
+  padding: 22px 24px 20px;
+}
+
+.home-profile-card .hero-burst {
+  display: block;
+  top: -14px;
+  right: 20px;
+  width: 34px;
+  height: 34px;
+}
+
+.home-profile-card .section-label { color: #ffffff; }
+
+.home-name {
+  font-family: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.home-summary {
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  margin-top: 4px;
+}
+
+.home-profile-card .btn-hero {
+  margin-top: 18px;
+  padding: 13px 0;
+  font-size: 17px;
+  box-shadow: var(--shadow-md);
+}
+
+.home-profile-card .btn-hero:active:not(:disabled) {
+  transform: translate(4px, 4px);
+}
+
+.home-profile-card .hero-microcopy { margin-top: 10px; font-size: 12px; }
+
+/* ── Editor ── */
+
+#view-editor .header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  gap: 12px;
+  padding: 14px 28px;
+}
+
+#view-editor .title { font-size: 18px; }
+
+#info-content { gap: 12px; }
+
+.editor-page .accordion-toggle { padding: 15px 18px; }
+.editor-page .accordion-title { font-size: 15px; }
+.editor-page .accordion-count { font-size: 12px; }
+.editor-page .accordion-body > * { padding: 0 18px 18px; }
+.editor-page .accordion-body .entry-list { padding: 0 14px 14px; }
+.editor-page .resume-card { padding: 16px 18px; }
+.editor-page .mini-field-label { font-size: 12px; }
+.editor-page .field-input,
+.editor-page .field-select { padding: 9px 12px; font-size: 14px; }
+.editor-page .entry-card-head { padding: 12px 14px; }
+.editor-page .entry-card-title { font-size: 13.5px; }
+
+/* Two columns of short fields when the window is wide enough; anything
+ * list-shaped (bullets, chips, checkbox groups) keeps the full width. */
+@media (min-width: 720px) {
+  .editor-page .section-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+
+  .editor-page .section-fields > .mini-field-row,
+  .editor-page .section-fields > .inline-checkbox,
+  .editor-page .section-fields > .mini-field:has(.bullets-textarea),
+  .editor-page .section-fields > .mini-field:has(.chip-list),
+  .editor-page .section-fields > .mini-field:has(.checkbox-group) {
+    grid-column: 1 / -1;
+  }
+
+  .editor-page .section-fields > .mini-field-row { gap: 16px; }
 }
