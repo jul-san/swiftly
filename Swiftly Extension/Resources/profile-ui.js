@@ -1,6 +1,7 @@
 // DOM rendering for the Info/Profile accordion. Pure formatting logic lives in
 // profile-format.js; this file only builds/updates elements and wires events.
 
+import { bulletsToText, textToBullets } from "./profile-format.js";
 
 function el(tag, className, children) {
   const node = document.createElement(tag);
@@ -152,8 +153,15 @@ export function createBulletsTextarea(bullets, onChange) {
   const textarea = el("textarea", "field-input bullets-textarea");
   textarea.placeholder = "• Built a multi-threaded Rust server to process incoming JSON\n• Developed a TCP/IP processing service…";
   textarea.rows = 4;
-  textarea.value = (bullets ?? []).join("\n");
-  textarea.addEventListener("input", () => onChange(textarea.value.split("\n")));
+  textarea.value = bulletsToText(bullets);
+  textarea.addEventListener("input", () => onChange(textToBullets(textarea.value)));
+  // Enter starts the next line with its own bullet marker.
+  textarea.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    textarea.setRangeText("\n• ", textarea.selectionStart, textarea.selectionEnd, "end");
+    textarea.dispatchEvent(new Event("input"));
+  });
 
   const head = el("div", "mini-field-head", [
     el("span", "mini-field-label", ["Bullet points"]),

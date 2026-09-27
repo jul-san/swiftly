@@ -4,6 +4,14 @@ import PDFKit
 struct ResumeTextExtractor {
 
     nonisolated func extract(from url: URL) -> Result<String, ParsingError> {
+        extractCandidates(from: url).map { $0[0] }
+    }
+
+    // The resume's text read two ways: rebuilt from glyph positions (columns separated by
+    // tabs, see `layoutText`), then PDFKit's own `page.string`. Callers should parse each
+    // and keep the better result: the rebuilt text depends on glyph bounds, which some
+    // PDFs report in ways this reconstruction doesn't expect.
+    nonisolated func extractCandidates(from url: URL) -> Result<[String], ParsingError> {
         guard url.pathExtension.lowercased() == "pdf" else {
             return .failure(.unsupportedFileType)
         }
@@ -12,25 +20,30 @@ struct ResumeTextExtractor {
             return .failure(.invalidFile)
         }
 
-        var pageTexts: [String] = []
+        var layoutPages: [String] = []
+        var plainPages: [String] = []
         for i in 0..<document.pageCount {
             guard let page = document.page(at: i) else { continue }
-            if let text = layoutText(for: page) ?? page.string,
-               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                pageTexts.append(text)
+            let plain = page.string ?? ""
+            if !plain.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                plainPages.append(plain)
+            }
+            let layout = layoutText(for: page) ?? plain
+            if !layout.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                layoutPages.append(layout)
             }
         }
 
         // Pages are joined with a single newline: a job whose bullets continue onto the
         // next page is still one entry.
-        let combined = pageTexts.joined(separator: "\n")
-        let trimmed = combined.trimmingCharacters(in: .whitespacesAndNewlines)
+        let layout = layoutPages.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        let plain = plainPages.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard trimmed.count >= 100 else {
+        guard max(layout.count, plain.count) >= 100 else {
             return .failure(.noExtractableText)
         }
 
-        return .success(trimmed)
+        return .success(layout == plain || layout.count < 100 ? [plain] : [layout, plain])
     }
 
     // MARK: - Layout reconstruction
