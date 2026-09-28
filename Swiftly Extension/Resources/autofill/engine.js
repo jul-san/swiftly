@@ -106,7 +106,7 @@ async function fillField(field, key, answer, ctx) {
       const a = choiceAnswerFor(answer, field, key);
       if (!a) return { ok: false, reason: "no usable answer for a dropdown" };
       const query = a.kind === "text" ? a.value : a.kind === "location" ? a.value.split(",")[0] : null;
-      return (ctx.adapter?.fillDropdown ?? fillDropdown)(field, a, { query });
+      return (ctx.adapter?.fillDropdown ?? fillDropdown)(field, a, { query, path: answer.path });
     }
     case "radio":
     case "buttonGroup": {
@@ -160,7 +160,7 @@ function decide(field, profile, ctx) {
     if (other) return { ...out, action: "skipped", reason: `asks about ${other}; your saved answer is for the US` };
   }
   if (!field.isEmpty) return { ...out, action: "skipped", reason: field.kind === "checkbox" ? "already checked" : "already has a value" };
-  const answer = resolveAnswer(cls.key, profile, field, ctx);
+  const answer = ctx.adapter?.fixedAnswer?.(cls.key, field) ?? resolveAnswer(cls.key, profile, field, ctx);
   if (!answer) return { ...out, action: "skipped", reason: def?.sensitive ? "no explicit answer saved in your profile" : "no value in your profile" };
   if (field.kind === "checkbox" && answer.kind === "boolean" && answer.value === "no") return { ...out, action: "skipped", reason: "already matches your profile (unchecked)" };
   return { ...out, action: "fill", answer };

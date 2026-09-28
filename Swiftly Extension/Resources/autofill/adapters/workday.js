@@ -186,6 +186,21 @@
         }
       }
     },
+    // "How Did You Hear About Us?" is always answered Job Sites > LinkedIn
+    // on Workday, whatever the profile says (owner's decision, Sept 2026).
+    fixedAnswer(key) {
+      if (key !== "preferences.referralSource") return null;
+      return { kind: "text", value: "LinkedIn", path: ["Job Sites", "LinkedIn"] };
+    },
+    // Walk the category path first; tenants without that category fall back
+    // to a typed search for the leaf.
+    async fillDropdown(field, answer, opts) {
+      if (opts?.path) {
+        const result = await fillDropdownPath(field, opts.path);
+        if (result) return result;
+      }
+      return fillDropdown(field, answer, opts);
+    },
     interactionDelayMs: 250, // Workday re-renders and validates on blur
     settle: { quietMs: 500, maxMs: 3000 },
     resumeSettle: { quietMs: 1000, maxMs: 8000 },

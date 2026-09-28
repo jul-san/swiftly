@@ -33,8 +33,13 @@
     "address--countryRegion": ["Alabama", "Alaska", "Arizona", "California", "Colorado", "New York", "Washington"],
     "phoneNumber--phoneType": ["Home", "Mobile", "Work"],
   };
-  const PROMPTS = {
-    "source--source": ["LinkedIn", "Indeed", "Glassdoor", "Company Website", "Employee Referral"],
+  // "How Did You Hear About Us?" is two levels deep, and LinkedIn is listed
+  // under two categories, so a typed search finds it twice.
+  const SOURCE_TREE = {
+    "Job Sites": ["Glassdoor", "Indeed", "LinkedIn"],
+    "Social Media": ["Facebook", "LinkedIn", "X (Twitter)"],
+    "Company Website": null,
+    "Employee Referral": null,
   };
 
   document.addEventListener("input", e => { if (e.target.id) window.__wd[e.target.id] = e.target.value; }, true);
@@ -86,33 +91,47 @@
   });
   document.addEventListener("keydown", e => { if (e.key === "Escape") closePopup(); });
 
-  // Prompts: Enter searches; results render in a popup; clicking one adds a pill.
-  document.addEventListener("keydown", e => {
-    const input = e.target.closest?.("[data-automation-id=multiSelectContainer] input");
-    if (!input || e.key !== "Enter" || !PROMPTS[input.id]) return;
-    const q = input.value.toLowerCase();
+  // Prompts: clicking opens the categories; clicking a category shows its
+  // options; Enter searches every leaf. Choosing a leaf adds a pill.
+  function choose(input, label) {
+    const box = input.closest("[data-automation-id=multiSelectContainer]");
+    const pill = document.createElement("div"); pill.setAttribute("data-automation-id", "selectedItem"); pill.setAttribute("role", "option");
+    pill.textContent = label.split(" > ").pop();
+    const list = document.createElement("ul"); list.setAttribute("role", "listbox"); list.setAttribute("data-automation-id", "selectedItemList");
+    const item = document.createElement("li"); item.append(pill); list.append(item);
+    box.querySelector("[data-automation-id=multiselectInputContainer]").append(list);
+    box.querySelector("[data-automation-id=promptAriaInstruction]").textContent = `1 item selected, ${pill.textContent}`;
+    input.value = ""; window.__wd[input.id] = label; closePopup();
+  }
+  function showPrompt(input, entries) {
     closePopup();
     setTimeout(() => {
       const { div, ul } = popup(input.id);
-      for (const label of PROMPTS[input.id].filter(l => l.toLowerCase().includes(q))) {
+      for (const [label, onPick] of entries) {
         const li = document.createElement("li"); li.setAttribute("role", "option");
         const p = document.createElement("div");
         p.setAttribute("data-automation-id", "promptOption"); p.setAttribute("data-automation-label", label); p.textContent = label;
         li.append(p);
-        li.addEventListener("click", () => {
-          const box = input.closest("[data-automation-id=multiSelectContainer]");
-          const pill = document.createElement("div"); pill.setAttribute("data-automation-id", "selectedItem"); pill.setAttribute("role", "option");
-          pill.textContent = label;
-          const list = document.createElement("ul"); list.setAttribute("role", "listbox"); list.setAttribute("data-automation-id", "selectedItemList");
-          const item = document.createElement("li"); item.append(pill); list.append(item);
-          box.querySelector("[data-automation-id=multiselectInputContainer]").append(list);
-          box.querySelector("[data-automation-id=promptAriaInstruction]").textContent = `1 item selected, ${label}`;
-          input.value = ""; window.__wd[input.id] = label; closePopup();
-        });
+        li.addEventListener("click", onPick);
         ul.append(li);
       }
       document.body.append(div);
     }, 150);
+  }
+  function showCategories(input) {
+    showPrompt(input, Object.entries(SOURCE_TREE).map(([cat, leaves]) => [cat, () => {
+      if (!leaves) return choose(input, cat);
+      showPrompt(input, leaves.map(leaf => [leaf, () => choose(input, `${cat} > ${leaf}`)]));
+    }]));
+  }
+  const source = document.getElementById("source--source");
+  source.addEventListener("click", () => showCategories(source));
+  source.addEventListener("keydown", e => {
+    if (e.key !== "Enter") return;
+    const q = source.value.toLowerCase();
+    const hits = Object.entries(SOURCE_TREE).flatMap(([cat, leaves]) => (leaves ?? [cat]).map(l => [cat, l]))
+      .filter(([, l]) => l.toLowerCase().includes(q));
+    showPrompt(source, hits.map(([cat, l]) => [l, () => choose(source, l === cat ? cat : `${cat} > ${l}`)]));
   });
 </script>
 </body></html>
