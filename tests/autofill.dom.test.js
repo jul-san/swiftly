@@ -294,7 +294,8 @@ test("Workday: fills each step as the user moves through it, never presses Next"
 });
 
 test("Workday: My Information step from a saved live page", async () => {
-  const profile = testProfile({ personal: { addressLine1: "1 Example Way", postalCode: "94105", country: "United States" } });
+  // The editor's address fields win over the one-line location.
+  const profile = testProfile({ personal: { addressLine1: "1 Example Way", city: "Denver", state: "CO", postalCode: "80202", country: "United States" } });
   const { page, logs } = await openFixture({ url: "https://example.wd5.myworkdayjobs.com/en-US/External/job/X/apply/applyManually", fixture: "workday-myinfo-snapshot.html" });
   const report = await sendMessage(page, { action: "autofill", profile, resume: RESUME });
   const wd = await page.evaluate(() => window.__wd);
@@ -304,13 +305,13 @@ test("Workday: My Information step from a saved live page", async () => {
   assert.equal(wd["name--legalName--firstName"], "Avery");
   assert.equal(wd["name--legalName--lastName"], "Example");
   assert.equal(wd["address--addressLine1"], "1 Example Way");
-  assert.equal(wd["address--city"], "San Francisco");
-  assert.equal(wd["address--countryRegion"], "California", "chosen from the popup, not from the phone-code prompt's selected pill");
-  assert.equal(wd["address--postalCode"], "94105");
+  assert.equal(wd["address--city"], "Denver");
+  assert.equal(wd["address--countryRegion"], "Colorado", "chosen from the popup, not from the phone-code prompt's selected pill");
+  assert.equal(wd["address--postalCode"], "80202");
   assert.equal(wd["phoneNumber--phoneNumber"], "(555) 010-0199");
   // The hidden id input beside each listbox button is never typed into.
   const shims = await page.$$eval("button[aria-haspopup=listbox] + input", els => els.map(e => e.value));
-  assert.deepEqual(shims, ["bc33aa3152ec42d4995f4791a106ed09", "california", ""]);
+  assert.deepEqual(shims, ["bc33aa3152ec42d4995f4791a106ed09", "colorado", ""]);
   assert.equal(wd["country--country"], undefined, "preselected country left alone");
   assert.equal(wd["phoneNumber--extension"], undefined, "extension is not the phone number");
   assert.equal(wd["phoneNumber--countryPhoneCode"], undefined);

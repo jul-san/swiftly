@@ -284,14 +284,10 @@ export function renderProfileSections(container, profile, { onChange, personalOp
   }));
   container.append(skillsAcc.section);
 
-  container.append(renderAddressSection(profile.personal, changed));
   container.append(renderWorkEligibilitySection(profile.personal, changed));
   container.append(renderDemographicsSection(profile.personal, changed));
 }
 
-// Structured address for applications that ask for it field by field
-// (Workday, some Greenhouse/Gem forms). "Location" above stays the one-line
-// answer for "Where are you located?" questions.
 // Stores an optional personal answer; an emptied field is saved as null.
 function setter(p, key, changed) {
   return (v) => { p[key] = v || null; changed(); };
@@ -305,23 +301,6 @@ function sectionFields() {
 
 const YES_NO = [["", ""], ["Yes", "Yes"], ["No", "No"]];
 const YES_NO_DECLINE = [...YES_NO, ["Prefer not to answer", "Prefer not to answer"]];
-
-function renderAddressSection(p, changed) {
-  const acc = ui.createAccordion({ title: "Address" });
-  const wrap = sectionFields();
-  const input = (label, key, placeholder) => ui.labeledInput({
-    label, value: p[key], placeholder, onInput: setter(p, key, changed),
-  });
-  wrap.append(
-    input("Street address", "addressLine1", "123 Main St"),
-    input("City", "city", "San Francisco"),
-    input("State / province", "state", "CA"),
-    input("ZIP / postal code", "postalCode", "94105"),
-    input("Country", "country", "United States"),
-  );
-  acc.body.append(wrap);
-  return acc.section;
-}
 
 function renderWorkEligibilitySection(p, changed) {
   const acc = ui.createAccordion({ title: "Work Eligibility" });
