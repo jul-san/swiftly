@@ -195,6 +195,31 @@ async function fillDropdown(field, answer, { query } = {}) {
   return { ok: true, reason: choice.reason, optionText: option.text, confidence: choice.confidence };
 }
 
+// Walks a hierarchical prompt (Workday "Job Sites > LinkedIn"): opens it,
+// then clicks one option per level. Returns null when a level is missing so
+// the caller can fall back to a typed search; nothing is left half-chosen
+// that the user didn't already see open.
+async function fillDropdownPath(field, path) {
+  openDropdown(field);
+  let options = await waitForOptions(field, 1500);
+  for (let level = 0; level < path.length; level++) {
+    const choice = chooseOption(options.map(o => o.text), { kind: "text", value: path[level] });
+    if (choice.index === -1) { closeDropdown(field); return null; }
+    const option = options[choice.index];
+    realisticClick(option.el.querySelector("[data-automation-id=promptOption]") ?? option.el);
+    if (level === path.length - 1) break;
+    // Wait for the next level to replace this one.
+    const start = Date.now();
+    do {
+      await swiftlySleep(100);
+      options = findOpenOptions(field);
+    } while (Date.now() - start < 2500 && (option.el.isConnected || !options.length));
+  }
+  await swiftlySleep(120);
+  closeDropdown(field);
+  return { ok: true, reason: "option path matches", optionText: path.join(" > ") };
+}
+
 // ─── Button groups (Ashby Yes/No and similar) ─────────────────────────────
 
 function fillButtonGroup(field, optionIndex) {
@@ -226,5 +251,5 @@ function fillFile(input, resume) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { setNativeValue, fillText, fillNativeSelect, setChecked, fillDropdown, fillButtonGroup, fillFile, realisticClick };
+  module.exports = { setNativeValue, fillText, fillNativeSelect, setChecked, fillDropdown, fillDropdownPath, fillButtonGroup, fillFile, realisticClick };
 }

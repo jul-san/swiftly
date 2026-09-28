@@ -301,7 +301,7 @@ test("Workday: My Information step from a saved live page", async () => {
   const wd = await page.evaluate(() => window.__wd);
 
   assert.equal(report.provider, "workday");
-  assert.equal(wd["source--source"], "LinkedIn");
+  assert.equal(wd["source--source"], "Job Sites > LinkedIn", "category first, then LinkedIn");
   assert.equal(wd["name--legalName--firstName"], "Avery");
   assert.equal(wd["name--legalName--lastName"], "Example");
   assert.equal(wd["address--addressLine1"], "1 Example Way");
@@ -326,8 +326,9 @@ test("Workday: My Information step from a saved live page", async () => {
 test("Workday: My Information keeps typed values and reports what the profile lacks", async () => {
   const { page } = await openFixture({ url: "https://example.wd5.myworkdayjobs.com/en-US/External/job/X/apply/applyManually", fixture: "workday-myinfo-snapshot.html" });
   await page.fill("#name--legalName--firstName", "Ave");
-  const report = await sendMessage(page, { action: "autofill", profile: testProfile(), resume: RESUME });
+  const report = await sendMessage(page, { action: "autofill", profile: testProfile({ personal: { referralSource: "Indeed" } }), resume: RESUME });
   const wd = await page.evaluate(() => window.__wd);
+  assert.equal(wd["source--source"], "Job Sites > LinkedIn", "Workday's source is always Job Sites > LinkedIn");
   assert.equal(wd["name--legalName--firstName"], "Ave", "existing value preserved");
   assert.equal(await page.inputValue("#address--addressLine1"), "", "no street address in the profile, none invented");
   assert.equal(await page.inputValue("#address--postalCode"), "");
