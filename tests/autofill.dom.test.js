@@ -336,6 +336,53 @@ test("Workday: My Information keeps typed values and reports what the profile la
   assert.ok(report.needsAttention.includes("Postal Code"));
 });
 
+test("Workday: My Experience from a saved live page adds a block per profile entry", async () => {
+  const profile = testProfile();
+  profile.experience.push({ id: "x2", company: "Sample Corp", title: "Research Assistant", location: "Remote", startDate: "Jan 2025", endDate: "Present", current: true, teamsOrGroups: [], bullets: ["Did research"] });
+  profile.education.push({ id: "e2", institution: "Example Community College", degree: "Associate of Arts", fieldOfStudy: "Mathematics", startDate: "2021", graduationDate: "2023", awards: [], details: [] });
+  const { page, logs } = await openFixture({ url: "https://example.wd5.myworkdayjobs.com/en-US/External/job/X/apply/applyManually", fixture: "workday-myexp-snapshot.html" });
+  await sendMessage(page, { action: "autofill", profile, resume: RESUME });
+  const [wd, adds] = await page.evaluate(() => [window.__wd, window.__adds]);
+
+  // The page starts with one block of each; "Add Another" is pressed once per extra entry.
+  assert.deepEqual(adds, { workExperience: 1, education: 1, websites: 0 });
+  // First job in the page's first block (workExperience-9).
+  assert.equal(wd["workExperience-9--jobTitle"], "Software Engineering Intern");
+  assert.equal(wd["workExperience-9--companyName"], "Example Labs");
+  assert.equal(wd["workExperience-9--location"], "Austin, TX");
+  assert.equal(wd["workExperience-9--startDate-dateSectionMonth-input"], "5");
+  assert.equal(wd["workExperience-9--startDate-dateSectionYear-input"], "2026");
+  assert.equal(wd["workExperience-9--endDate-dateSectionMonth-input"], "8");
+  assert.equal(wd["workExperience-9--endDate-dateSectionYear-input"], "2026");
+  assert.match(wd["workExperience-9--roleDescription"], /Built a thing/);
+  assert.equal(wd["workExperience-9--currentlyWorkHere"], undefined);
+  // Second job in the added block; it's current, so the box is checked and To stays empty.
+  assert.equal(wd["workExperience-11--jobTitle"], "Research Assistant");
+  assert.equal(wd["workExperience-11--companyName"], "Sample Corp");
+  assert.equal(wd["workExperience-11--currentlyWorkHere"], true, "each block's checkbox is its own field");
+  assert.equal(wd["workExperience-11--startDate-dateSectionYear-input"], "2025");
+  assert.equal(wd["workExperience-11--endDate-dateSectionYear-input"], undefined);
+  // Education, in profile order.
+  assert.equal(wd["education-10--school"], "Example State University");
+  assert.equal(wd["education-10--degree"], "Bachelor's Degree");
+  assert.equal(wd["education-10--fieldOfStudy"], "Computer Science");
+  assert.equal(wd["education-12--school"], "Example Community College");
+  assert.equal(wd["education-12--degree"], "Associate's Degree");
+  assert.equal(wd["education-12--fieldOfStudy"], "Mathematics");
+  assert.equal(wd.resume, "Test_Resume.pdf");
+  assert.equal(await page.evaluate(() => window.__untrustedNext), 0, "Swiftly never clicks Save and Continue");
+  assertLogsArePrivate(logs, profile);
+});
+
+test("Workday: My Experience adds no blocks when the profile has one entry of each", async () => {
+  const { page } = await openFixture({ url: "https://example.wd5.myworkdayjobs.com/en-US/External/job/X/apply/applyManually", fixture: "workday-myexp-snapshot.html" });
+  await sendMessage(page, { action: "autofill", profile: testProfile(), resume: RESUME });
+  const [wd, adds] = await page.evaluate(() => [window.__wd, window.__adds]);
+  assert.deepEqual(adds, { workExperience: 0, education: 0, websites: 0 });
+  assert.equal(wd["workExperience-9--companyName"], "Example Labs");
+  assert.equal(wd["education-10--school"], "Example State University");
+});
+
 // ─── Cross-cutting ────────────────────────────────────────────────────────
 
 test("frames without an application stay silent so the embedding frame's form answers", async () => {

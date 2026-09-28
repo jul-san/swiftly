@@ -13,9 +13,9 @@ documentation and open-source autofill projects supplied the DOM
 conventions. Gem's form renders in JavaScript and publishes no form schema.
 This session's network could not open the live job sites, so Ashby, Gem and
 Workday are not yet verified against a saved live page.
-Workday's My Information step was checked against a saved live page in late
-September 2026 (`tests/fixtures/workday-myinfo-snapshot.html`); its other steps
-are still unverified.
+Workday's My Information and My Experience steps were checked against saved
+live pages in late September 2026 (`tests/fixtures/workday-myinfo-snapshot.html`,
+`workday-myexp-snapshot.html`); its other steps are still unverified.
 
 | | Greenhouse (job-boards) | Ashby | Gem | Workday |
 |---|---|---|---|---|

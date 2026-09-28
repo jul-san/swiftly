@@ -195,10 +195,16 @@ function detectFields(root, adapter = null) {
 
   // Radio / checkbox groups.
   const groups = new Map();
+  const containerIds = new Map();
   for (const input of swiftlyQueryAll(root, "input[type=radio], input[type=checkbox]")) {
     if (seen.has(input) || skip(input) || input.disabled) continue;
     const fs = input.closest("fieldset, [role=radiogroup], [role=group]");
-    const key = input.name ? `${input.type}:${input.name}` : fs ? fs : input;
+    // Repeated blocks reuse checkbox names (Workday's "I currently work
+    // here" in every Work Experience block), so checkboxes only group
+    // within one container. Radios sharing a name are one group anyway.
+    if (fs && !containerIds.has(fs)) containerIds.set(fs, containerIds.size);
+    const scope = input.type === "checkbox" && fs ? `:${containerIds.get(fs)}` : "";
+    const key = input.name ? `${input.type}:${input.name}${scope}` : fs ? fs : input;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(input);
   }
