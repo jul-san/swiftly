@@ -16,6 +16,11 @@ function swiftlyApplicationHere() {
   return hasControls ? adapter : null;
 }
 
+// A report for a run that filled nothing, in the shape runAutofill returns.
+function emptyReport(extra) {
+  return { supported: true, filled: 0, fields: [], needsAttention: [], ...extra };
+}
+
 browser.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === "detect") {
     const adapter = swiftlyApplicationHere();
@@ -27,7 +32,7 @@ browser.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === "autofill") {
     if (!swiftlyApplicationHere()) return false;
     if (swiftlyRunning) {
-      sendResponse({ supported: true, busy: true, filled: 0, fields: [], needsAttention: [] });
+      sendResponse(emptyReport({ busy: true }));
       return false;
     }
     swiftlyRunning = true;
@@ -35,7 +40,7 @@ browser.runtime.onMessage.addListener((request, _sender, sendResponse) => {
       .then(sendResponse)
       .catch(err => {
         console.error("[Swiftly] autofill failed:", err?.message ?? err);
-        sendResponse({ supported: true, error: "Autofill hit an unexpected error on this page.", filled: 0, fields: [], needsAttention: [] });
+        sendResponse(emptyReport({ error: "Autofill hit an unexpected error on this page." }));
       })
       .finally(() => { swiftlyRunning = false; });
     return true;

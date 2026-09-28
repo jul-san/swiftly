@@ -101,5 +101,5 @@
     resumeSettle: { quietMs: 600, maxMs: 4000 },
   };
 
-  (globalThis.SWIFTLY_ADAPTERS || (globalThis.SWIFTLY_ADAPTERS = [])).push(adapter);
+  registerSwiftlyAdapter(adapter);
 })();

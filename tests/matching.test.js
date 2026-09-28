@@ -8,9 +8,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  matchesSignalList,
   detectProviderFromHost,
-  pickBestSelectOption,
 } = require("../Swiftly Extension/Resources/autofill/matching.js");
 
 // ─── detectProviderFromHost ──────────────────────────────────────────────
@@ -43,51 +41,28 @@ test("does not false-positive on lookalike hosts (no false-positive matching)", 
   assert.equal(detectProviderFromHost("evil-greenhouse.io.attacker.com"), null);
 });
 
-// ─── matchesSignalList ───────────────────────────────────────────────────
+// ─── chooseOption with a plain text answer ─────────────────────────────────
 
-test("matches on exact normalized equality", () => {
-  assert.equal(matchesSignalList(["First Name"], ["first name"]), true);
-  assert.equal(matchesSignalList(["first_name"], ["firstname"]), true);
-});
-
-test("matches short signals only via exact equality, not substring", () => {
-  // "cv" (2 chars) must not match a candidate that merely contains it.
-  assert.equal(matchesSignalList(["active"], ["cv"]), false);
-  assert.equal(matchesSignalList(["cv"], ["cv"]), true);
-});
-
-test("matches long signals via substring once past the length threshold", () => {
-  assert.equal(matchesSignalList(["yourlinkedinprofileurl"], ["linkedin profile"]), true);
-});
-
-test("unrelated candidates are ignored", () => {
-  assert.equal(matchesSignalList(["favorite color"], ["email", "phone", "first name"]), false);
-});
-
-test("handles empty/undefined candidates gracefully", () => {
-  assert.equal(matchesSignalList([null, undefined, ""], ["email"]), false);
-});
-
-// ─── pickBestSelectOption ─────────────────────────────────────────────────
+const pickText = (options, value) => chooseOption(options, { kind: "text", value }).index;
 
 test("picks an exact option match", () => {
   const options = ["", "Bachelor's Degree", "Master's Degree", "PhD"];
-  assert.equal(pickBestSelectOption(options, "Master's Degree"), 2);
+  assert.equal(pickText(options, "Master's Degree"), 2);
 });
 
-test("picks a substring option match in either direction", () => {
+test("picks an option that is an alias of the value", () => {
   const options = ["", "United States", "Canada"];
-  assert.equal(pickBestSelectOption(options, "United States of America"), 1);
+  assert.equal(pickText(options, "United States of America"), 1);
 });
 
 test("returns -1 (leave blank) when nothing confidently matches", () => {
   const options = ["", "Bachelor's Degree", "Master's Degree", "PhD"];
-  assert.equal(pickBestSelectOption(options, "Bachelor of Science"), -1);
+  assert.equal(pickText(options, "Bachelor of Science"), -1);
 });
 
 test("returns -1 for an empty target value", () => {
-  assert.equal(pickBestSelectOption(["", "Yes", "No"], ""), -1);
-  assert.equal(pickBestSelectOption(["", "Yes", "No"], null), -1);
+  assert.equal(pickText(["", "Yes", "No"], ""), -1);
+  assert.equal(pickText(["", "Yes", "No"], null), -1);
 });
 
 // ─── Normalization ───────────────────────────────────────────────────────

@@ -67,12 +67,7 @@ function fillNativeSelect(select, optionIndex) {
   const option = select.options[optionIndex];
   if (!option) return false;
   select.focus?.({ preventScroll: true });
-  if (typeof HTMLSelectElement !== "undefined") {
-    const desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(select), "value");
-    desc?.set ? desc.set.call(select, option.value) : (select.value = option.value);
-  } else {
-    select.value = option.value;
-  }
+  setNativeValue(select, option.value);
   select.selectedIndex = optionIndex;
   fire(select, "input");
   fire(select, "change");

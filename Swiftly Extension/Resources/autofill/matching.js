@@ -9,12 +9,6 @@
 
 // ─── Normalization ────────────────────────────────────────────────────────
 
-// Legacy compact form (lowercase, no spaces/dashes/underscores). Still used by
-// matchesSignalList for attribute-style comparisons.
-function normalizeSignal(s) {
-  return (s ?? "").toString().toLowerCase().replace(/[-_\s]/g, "");
-}
-
 // Whole-word abbreviations and spelling variants that should compare equal.
 const TEXT_EQUIVALENTS = [
   [/\be[\s-]?mail\b/g, "email"],
@@ -35,7 +29,6 @@ const TEXT_EQUIVALENTS = [
   [/\bauthorised\b/g, "authorized"],
   [/\bauthorisation\b/g, "authorization"],
   [/\borganisation\b/g, "organization"],
-  [/\bprovince\b/g, "province"],
 ];
 
 // Lowercases, strips diacritics and punctuation, collapses whitespace, and
@@ -76,18 +69,6 @@ function tokenizeIdentifier(s) {
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
-}
-
-// candidates: raw strings pulled from a DOM element (name/id/placeholder/label/…)
-// signals: known phrasings for the field we're looking for
-function matchesSignalList(candidates, signals) {
-  const normCandidates = (candidates ?? []).filter(Boolean).map(normalizeSignal);
-  for (const signal of signals) {
-    const normalized = normalizeSignal(signal);
-    if (normCandidates.some(c => c === normalized)) return true;
-    if (normalized.length >= 8 && normCandidates.some(c => c.includes(normalized))) return true;
-  }
-  return false;
 }
 
 // ─── ATS detection ────────────────────────────────────────────────────────
@@ -416,23 +397,11 @@ function chooseOption(optionTexts, answer, { now = new Date() } = {}) {
   }
 }
 
-// Back-compat wrapper: index of the option whose text confidently matches
-// `value`, or -1 (leave blank).
-function pickBestSelectOption(optionTexts, value) {
-  if (!normalizeText(value)) return -1;
-  const opts = (optionTexts ?? []).map(t => (t ?? "").toString());
-  const target = normalizeText(value);
-  const exact = opts.findIndex(t => normalizeText(t) === target);
-  if (exact !== -1) return exact;
-  return chooseOption(opts, { kind: "text", value }).index;
-}
-
 // CommonJS export for Node-based unit tests only; no-op in the browser.
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    normalizeSignal, normalizeText, cleanLabel, tokenizeIdentifier, matchesSignalList,
-    detectProviderFromHost, PROVIDER_LABELS, answerPolarity, valueAliases, textMatchScore,
+    normalizeText, cleanLabel, tokenizeIdentifier, detectProviderFromHost, PROVIDER_LABELS, answerPolarity, valueAliases, textMatchScore,
     degreeLevel, monthIndex, MONTHS, parseLooseDate, parseDateRangeOption, chooseOption,
-    pickBestSelectOption, US_STATES,
+    US_STATES,
   };
 }
