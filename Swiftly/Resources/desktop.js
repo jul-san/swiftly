@@ -29,18 +29,21 @@ window.__swiftlyResolve = (id, resultBase64) => {
 
 function nativeMessage(action, extra = {}, timeoutMs = 4000) {
   const id = ++requestCounter;
+  let timer;
   const request = new Promise((resolve) => {
     pending.set(id, resolve);
     window.webkit.messageHandlers.swiftlyNative.postMessage({ id, action, ...extra });
   });
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(`nativeMessage("${action}") timed out after ${timeoutMs}ms`)), timeoutMs)
-  );
-  return Promise.race([request, timeout]).catch((err) => {
-    pending.delete(id);
-    console.error("[Swiftly]", err);
-    throw err;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`nativeMessage("${action}") timed out after ${timeoutMs}ms`)), timeoutMs);
   });
+  return Promise.race([request, timeout])
+    .catch((err) => {
+      pending.delete(id);
+      console.error("[Swiftly]", err);
+      throw err;
+    })
+    .finally(() => clearTimeout(timer));
 }
 
 // ─── Profile state ─────────────────────────────────────────────────────────
@@ -77,39 +80,12 @@ function stableStringify(value) {
 
 // ─── Autosave ────────────────────────────────────────────────────────────
 
-let saveTimer = null;
-
-function scheduleSave() {
-  showSaveStatus("Saving…");
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(persist, 500);
-}
-
-let saving = false;
-
-async function persist() {
-  saveTimer = null;
-  saving = true;
-  try {
-    const res = await nativeMessage("saveProfile", { profile });
-    showSaveStatus(res?.success ? "Saved" : "Couldn't save");
-    if (res?.success) lastSyncedSnapshot = (await readStore()).snapshot;
-  } catch {
-    showSaveStatus("Couldn't save");
-  } finally {
-    saving = false;
-  }
-}
-
-let saveStatusTimer = null;
-function showSaveStatus(text) {
-  const el = document.getElementById("save-status");
-  if (!el) return;
-  el.textContent = text;
-  el.classList.add("visible");
-  clearTimeout(saveStatusTimer);
-  saveStatusTimer = setTimeout(() => el.classList.remove("visible"), 2000);
-}
+const autosave = editor.createAutosave(async () => {
+  const res = await nativeMessage("saveProfile", { profile });
+  if (!res?.success) return false;
+  lastSyncedSnapshot = (await readStore()).snapshot;
+  return true;
+});
 
 // ─── Staying in sync with the Safari extension ─────────────────────────────
 // This window lives for the app's whole lifetime, so the profile it loaded at
@@ -120,14 +96,14 @@ function showSaveStatus(text) {
 // to be saved (those are newer than anything in the store).
 
 window.__swiftlyRefresh = async () => {
-  if (saveTimer || saving) return;
+  if (autosave.busy) return;
   let store;
   try {
     store = await readStore();
   } catch {
     return;
   }
-  if (saveTimer || saving || store.snapshot === lastSyncedSnapshot) return;
+  if (autosave.busy || store.snapshot === lastSyncedSnapshot) return;
   lastSyncedSnapshot = store.snapshot;
   profile = store.raw ? editor.normalizeProfile(store.raw) : editor.emptyProfile();
   rerenderCurrentView();
@@ -209,7 +185,7 @@ function renderEditor() {
     statusMessage: resumeStatusMessage,
     onFileChosen: handleResumeFileChosen,
   }));
-  editor.renderProfileSections(container, profile, { onChange: scheduleSave, personalOpen: true });
+  editor.renderProfileSections(container, profile, { onChange: autosave.schedule, personalOpen: true });
 }
 
 async function handleResumeFileChosen(file) {
@@ -219,13 +195,10 @@ async function handleResumeFileChosen(file) {
   try {
     const base64 = await editor.fileToBase64(file);
     const res = await nativeMessage("parseResume", { fileName: file.name, base64 });
-    if (res?.success && res.profile) {
-      profile = editor.mergeParsedProfile(profile, res.profile);
-      resumeStatusMessage = editor.summarizeParse(profile);
-      scheduleSave(); // the native side just saved the un-merged parse — persist the merge
-    } else {
-      resumeStatusMessage = res?.error || "Couldn't parse this resume. You can still fill in your info manually.";
-    }
+    const parsed = editor.applyParseResponse(profile, res);
+    profile = parsed.profile;
+    resumeStatusMessage = parsed.message;
+    if (parsed.changed) autosave.flush(); // parsing doesn't save; store the merged profile now
   } catch {
     resumeStatusMessage = "Couldn't parse this resume right now. You can still fill in your info manually.";
   }

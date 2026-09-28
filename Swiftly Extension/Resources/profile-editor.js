@@ -70,6 +70,65 @@ export function summarizeParse(p) {
     : "Parsed your resume — review your info below.";
 }
 
+// Folds a native `parseResume` response into the profile. Returns the profile
+// to keep (the merge when parsing worked, `prior` otherwise), whether it
+// changed, and the message for the resume card.
+export function applyParseResponse(prior, response) {
+  if (response?.success && response.profile) {
+    const profile = mergeParsedProfile(prior, response.profile);
+    return { profile, changed: true, message: summarizeParse(profile) };
+  }
+  return {
+    profile: prior,
+    changed: false,
+    message: response?.error || "Couldn't parse this resume. You can still fill in your info manually.",
+  };
+}
+
+// Debounced saving with the header's "Saving… / Saved" indicator, shared by
+// the popup and the desktop window. `save` persists the current profile and
+// resolves to whether it worked. `busy` is true while an edit is waiting to be
+// saved or a save is in flight.
+export function createAutosave(save, { delayMs = 500, statusElementId = "save-status" } = {}) {
+  let saveTimer = null;
+  let saving = false;
+  let statusTimer = null;
+
+  function showStatus(text) {
+    const el = document.getElementById(statusElementId);
+    if (!el) return;
+    el.textContent = text;
+    el.classList.add("visible");
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => el.classList.remove("visible"), 2000);
+  }
+
+  async function flush() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    saving = true;
+    try {
+      showStatus((await save()) ? "Saved" : "Couldn't save");
+    } catch {
+      showStatus("Couldn't save");
+    } finally {
+      saving = false;
+    }
+  }
+
+  function schedule() {
+    showStatus("Saving…");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, delayMs);
+  }
+
+  return {
+    schedule,
+    flush,
+    get busy() { return saveTimer !== null || saving; },
+  };
+}
+
 export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -233,13 +292,25 @@ export function renderProfileSections(container, profile, { onChange, personalOp
 // Structured address for applications that ask for it field by field
 // (Workday, some Greenhouse/Gem forms). "Location" above stays the one-line
 // answer for "Where are you located?" questions.
-function renderAddressSection(p, changed) {
-  const acc = ui.createAccordion({ title: "Address" });
+// Stores an optional personal answer; an emptied field is saved as null.
+function setter(p, key, changed) {
+  return (v) => { p[key] = v || null; changed(); };
+}
+
+function sectionFields() {
   const wrap = document.createElement("div");
   wrap.className = "section-fields";
+  return wrap;
+}
+
+const YES_NO = [["", ""], ["Yes", "Yes"], ["No", "No"]];
+const YES_NO_DECLINE = [...YES_NO, ["Prefer not to answer", "Prefer not to answer"]];
+
+function renderAddressSection(p, changed) {
+  const acc = ui.createAccordion({ title: "Address" });
+  const wrap = sectionFields();
   const input = (label, key, placeholder) => ui.labeledInput({
-    label, value: p[key], placeholder,
-    onInput: v => { p[key] = v || null; changed(); },
+    label, value: p[key], placeholder, onInput: setter(p, key, changed),
   });
   wrap.append(
     input("Street address", "addressLine1", "123 Main St"),
@@ -254,103 +325,65 @@ function renderAddressSection(p, changed) {
 
 function renderWorkEligibilitySection(p, changed) {
   const acc = ui.createAccordion({ title: "Work Eligibility" });
-  const wrap = document.createElement("div");
-  wrap.className = "section-fields";
+  const wrap = sectionFields();
+  const select = (label, key, options) => ui.selectField({
+    label, value: p[key], options, onChange: setter(p, key, changed),
+  });
+  const input = (label, key, placeholder) => ui.labeledInput({
+    label, value: p[key], placeholder, onInput: setter(p, key, changed),
+  });
 
   wrap.append(
-    ui.selectField({
-      label: "Authorized to work in the US?", value: p.workAuthorization,
-      options: [["", ""], ["Yes", "Yes"], ["No", "No"], ["Prefer not to answer", "Prefer not to answer"]],
-      onChange: v => { p.workAuthorization = v || null; changed(); },
-    }),
-    ui.selectField({
-      label: "Will you require visa sponsorship?", value: p.requiresSponsorship,
-      options: [["", ""], ["Yes", "Yes"], ["No", "No"], ["Prefer not to answer", "Prefer not to answer"]],
-      onChange: v => { p.requiresSponsorship = v || null; changed(); },
-    }),
-    ui.selectField({
-      label: "Can you work in-person / from an office?", value: p.inPersonWork,
-      options: [["", ""], ["Yes", "Yes"], ["No", "No"], ["Prefer not to answer", "Prefer not to answer"]],
-      onChange: v => { p.inPersonWork = v || null; changed(); },
-    }),
-    ui.selectField({
-      label: "Willing to relocate?", value: p.willingToRelocate,
-      options: [["", ""], ["Yes", "Yes"], ["No", "No"]],
-      onChange: v => { p.willingToRelocate = v || null; changed(); },
-    }),
-    ui.labeledInput({
-      label: "Earliest start date", value: p.earliestStartDate, placeholder: "June 2027",
-      onInput: v => { p.earliestStartDate = v || null; changed(); },
-    }),
-    ui.labeledInput({
-      label: "Salary expectation", value: p.desiredSalary, placeholder: "Leave blank to answer per application",
-      onInput: v => { p.desiredSalary = v || null; changed(); },
-    }),
-    ui.labeledInput({
-      label: "How you usually find jobs", value: p.referralSource, placeholder: "LinkedIn",
-      onInput: v => { p.referralSource = v || null; changed(); },
-    }),
+    select("Authorized to work in the US?", "workAuthorization", YES_NO_DECLINE),
+    select("Will you require visa sponsorship?", "requiresSponsorship", YES_NO_DECLINE),
+    select("Can you work in-person / from an office?", "inPersonWork", YES_NO_DECLINE),
+    select("Willing to relocate?", "willingToRelocate", YES_NO),
+    input("Earliest start date", "earliestStartDate", "June 2027"),
+    input("Salary expectation", "desiredSalary", "Leave blank to answer per application"),
+    input("How you usually find jobs", "referralSource", "LinkedIn"),
   );
   acc.body.append(wrap);
   return acc.section;
 }
 
+// Stored values are the wording ATS forms use, so the autofill engine can
+// match them against option text; labels are what the editor shows.
+const GENDER_OPTIONS = [
+  ["", ""], ["Man", "Man"], ["Woman", "Woman"], ["Non-Binary", "Non-Binary"],
+  ["Another Gender Identity", "Another Gender Identity"],
+  ["I prefer not to answer", "I prefer not to answer"],
+];
+const RACE_OPTIONS = [
+  "Asian or Asian American", "Black or African American", "Hispanic or Latine",
+  "Indigenous or Native American", "Native Hawaiian or Other Pacific Islander",
+  "White", "Other", "I prefer not to answer",
+];
+const VETERAN_OPTIONS = [
+  ["", ""],
+  ["I am not a protected veteran", "Not a protected veteran"],
+  ["I identify as one or more of the classifications of protected veteran listed above", "Protected veteran"],
+  ["I decline to self-identify for protected veteran status", "Decline to self-identify"],
+];
+const DISABILITY_OPTIONS = [
+  ["", ""],
+  ["Yes, I Have A Disability, Or Have Had One In The Past", "Yes, I have a disability"],
+  ["No, I Don't Have A Disability", "No"],
+  ["I Don't Wish To Answer", "Prefer not to answer"],
+];
+
 function renderDemographicsSection(p, changed) {
   const acc = ui.createAccordion({ title: "Demographics" });
-  const wrap = document.createElement("div");
-  wrap.className = "section-fields";
+  const wrap = sectionFields();
+  const select = (label, key, options) => ui.selectField({
+    label, value: p[key], options, onChange: setter(p, key, changed),
+  });
 
   wrap.append(
-    ui.labeledInput({
-      label: "Pronouns", value: p.pronouns, placeholder: "she/her",
-      onInput: v => { p.pronouns = v || null; changed(); },
-    }),
-    ui.selectField({
-      label: "Gender identity", value: p.genderIdentity,
-      options: [
-        ["", ""], ["Man", "Man"], ["Woman", "Woman"], ["Non-Binary", "Non-Binary"],
-        ["Another Gender Identity", "Another Gender Identity"],
-        ["I prefer not to answer", "I prefer not to answer"],
-      ],
-      onChange: v => { p.genderIdentity = v || null; changed(); },
-    }),
-  );
-
-  const raceField = document.createElement("div");
-  raceField.className = "mini-field";
-  const raceLabel = document.createElement("span");
-  raceLabel.className = "mini-field-label";
-  raceLabel.textContent = "Race / Ethnicity";
-  raceField.append(raceLabel, ui.raceCheckboxGroup(
-    ["Asian or Asian American", "Black or African American", "Hispanic or Latine",
-      "Indigenous or Native American", "Native Hawaiian or Other Pacific Islander",
-      "White", "Other", "I prefer not to answer"],
-    p.raceEthnicity,
-    (csv) => { p.raceEthnicity = csv || null; changed(); },
-  ));
-  wrap.append(raceField);
-
-  wrap.append(
-    ui.selectField({
-      label: "Veteran status", value: p.veteranStatus,
-      options: [
-        ["", ""],
-        ["I am not a protected veteran", "Not a protected veteran"],
-        ["I identify as one or more of the classifications of protected veteran listed above", "Protected veteran"],
-        ["I decline to self-identify for protected veteran status", "Decline to self-identify"],
-      ],
-      onChange: v => { p.veteranStatus = v || null; changed(); },
-    }),
-    ui.selectField({
-      label: "Disability status", value: p.disabilityStatus,
-      options: [
-        ["", ""],
-        ["Yes, I Have A Disability, Or Have Had One In The Past", "Yes, I have a disability"],
-        ["No, I Don't Have A Disability", "No"],
-        ["I Don't Wish To Answer", "Prefer not to answer"],
-      ],
-      onChange: v => { p.disabilityStatus = v || null; changed(); },
-    }),
+    ui.labeledInput({ label: "Pronouns", value: p.pronouns, placeholder: "she/her", onInput: setter(p, "pronouns", changed) }),
+    select("Gender identity", "genderIdentity", GENDER_OPTIONS),
+    ui.fieldGroup("Race / Ethnicity", ui.raceCheckboxGroup(RACE_OPTIONS, p.raceEthnicity, setter(p, "raceEthnicity", changed))),
+    select("Veteran status", "veteranStatus", VETERAN_OPTIONS),
+    select("Disability status", "disabilityStatus", DISABILITY_OPTIONS),
   );
 
   acc.body.append(wrap);

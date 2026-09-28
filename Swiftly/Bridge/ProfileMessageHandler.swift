@@ -54,6 +54,10 @@ struct ProfileMessageHandler {
 
     // MARK: - Resume parsing
 
+    // Returns the parsed profile without saving it. The caller merges in the
+    // answers a resume never contains (work eligibility, demographics, address)
+    // from the profile it already has and saves that, so a parse can never
+    // overwrite them in the shared store.
     private func handleParseResume(_ message: [String: Any]) -> [String: Any] {
         guard
             let base64 = message["base64"] as? String,
@@ -95,11 +99,6 @@ struct ProfileMessageHandler {
 
         switch ResumeParser().parse(texts: texts, filename: fileName) {
         case .success(let result):
-            do {
-                try store.saveProfile(result.profile)
-            } catch {
-                return ["success": false, "error": "Parsed the resume but couldn't save the profile."]
-            }
             return [
                 "success": true,
                 "profile": encodeProfile(result.profile),

@@ -7,14 +7,17 @@ import * as editor from "./profile-editor.js";
 // ─── Native messaging (bridges to the companion app's parser + storage) ────
 
 function nativeMessage(action, extra = {}, timeoutMs = 4000) {
+  let timer;
   const request = Promise.resolve(browser.runtime.sendNativeMessage({ action, ...extra }));
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(`nativeMessage("${action}") timed out after ${timeoutMs}ms`)), timeoutMs)
-  );
-  return Promise.race([request, timeout]).catch((err) => {
-    console.error("[Swiftly]", err);
-    throw err;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`nativeMessage("${action}") timed out after ${timeoutMs}ms`)), timeoutMs);
   });
+  return Promise.race([request, timeout])
+    .catch((err) => {
+      console.error("[Swiftly]", err);
+      throw err;
+    })
+    .finally(() => clearTimeout(timer));
 }
 
 // ─── Profile state ───────────────────────────────────────────────────────
@@ -23,34 +26,12 @@ let profile = editor.emptyProfile();
 let resumeMeta = null;
 let resumeStatusMessage = "";
 
-// ─── Autosave ────────────────────────────────────────────────────────────
+const autosave = editor.createAutosave(async () => {
+  const res = await nativeMessage("saveProfile", { profile });
+  return !!res?.success;
+});
 
-let saveTimer = null;
-
-function scheduleSave() {
-  showSaveStatus("Saving…");
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(persist, 500);
-}
-
-async function persist() {
-  try {
-    const res = await nativeMessage("saveProfile", { profile });
-    showSaveStatus(res?.success ? "Saved" : "Couldn't save");
-  } catch {
-    showSaveStatus("Couldn't save");
-  }
-}
-
-let saveStatusTimer = null;
-function showSaveStatus(text) {
-  const el = document.getElementById("save-status");
-  if (!el) return;
-  el.textContent = text;
-  el.classList.add("visible");
-  clearTimeout(saveStatusTimer);
-  saveStatusTimer = setTimeout(() => el.classList.remove("visible"), 2000);
-}
+const AUTOFILL_LABEL = "Autofill with Swiftly";
 
 // ─── Boot ────────────────────────────────────────────────────────────────
 
@@ -111,35 +92,36 @@ function renderHome() {
     hide("resume-status");
   }
 
-  browser.tabs.query({ active: true, currentWindow: true }).then(async tabs => {
-    const url = tabs[0]?.url ?? "";
-    const tabId = tabs[0]?.id;
-
-    // Ask the page first: the content script also runs inside ATS iframes
-    // embedded on company career sites, where the tab URL isn't an ATS host.
-    const detected = await browser.tabs.sendMessage(tabId, { action: "detect" }).catch(() => null);
-    const provider = detected?.provider ?? detectProvider(url);
+  renderPageStatus().catch((err) => {
+    console.error("[Swiftly] couldn't check the current page:", err);
     hide("page-checking");
-
-    if (provider) {
-      document.getElementById("provider-status-text").textContent =
-        `${PROVIDER_LABELS[provider] ?? provider} application detected`;
-      show("page-supported");
-      const btn = document.getElementById("autofill-btn");
-      setAutofillReport(null);
-      if (detected?.blocked) {
-        btn.disabled = true;
-        btn.textContent = "Autofill with Swiftly";
-        setAutofillReport(detected.blocked);
-        return;
-      }
-      btn.disabled = false;
-      btn.textContent = "Autofill with Swiftly";
-      btn.onclick = () => doAutofill(tabId);
-    } else {
-      show("page-other");
-    }
+    show("page-other");
   });
+}
+
+async function renderPageStatus() {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  const url = tab?.url ?? "";
+  const tabId = tab?.id;
+
+  // Ask the page first: the content script also runs inside ATS iframes
+  // embedded on company career sites, where the tab URL isn't an ATS host.
+  const detected = await browser.tabs.sendMessage(tabId, { action: "detect" }).catch(() => null);
+  const provider = detected?.provider ?? detectProvider(url);
+  hide("page-checking");
+
+  if (!provider) {
+    show("page-other");
+    return;
+  }
+  document.getElementById("provider-status-text").textContent =
+    `${PROVIDER_LABELS[provider] ?? provider} application detected`;
+  show("page-supported");
+  const btn = document.getElementById("autofill-btn");
+  btn.textContent = AUTOFILL_LABEL;
+  btn.disabled = !!detected?.blocked;
+  setAutofillReport(detected?.blocked ?? null);
+  if (!detected?.blocked) btn.onclick = () => doAutofill(tabId);
 }
 
 async function doAutofill(tabId) {
@@ -156,7 +138,7 @@ async function doAutofill(tabId) {
     });
     if (!result) throw new Error("no response");
     if (result.blocked || result.error) {
-      btn.textContent = "Autofill with Swiftly";
+      btn.textContent = AUTOFILL_LABEL;
       btn.disabled = false;
       setAutofillReport(result.blocked || result.error);
       return;
@@ -201,7 +183,7 @@ function renderInfo() {
     statusMessage: resumeStatusMessage,
     onFileChosen: handleResumeFileChosen,
   }));
-  editor.renderProfileSections(container, profile, { onChange: scheduleSave });
+  editor.renderProfileSections(container, profile, { onChange: autosave.schedule });
 }
 
 async function handleResumeFileChosen(file) {
@@ -214,13 +196,12 @@ async function handleResumeFileChosen(file) {
 
   try {
     const res = await nativeMessage("parseResume", { fileName: file.name, base64 });
-    if (res?.success && res.profile) {
-      profile = editor.mergeParsedProfile(profile, res.profile);
-      resumeStatusMessage = editor.summarizeParse(profile);
-      scheduleSave(); // the native side just saved the un-merged parse — persist the merge
-    } else {
-      resumeStatusMessage = res?.error || "Couldn't parse this resume. You can still fill in your info manually.";
-    }
+    const parsed = editor.applyParseResponse(profile, res);
+    profile = parsed.profile;
+    resumeStatusMessage = parsed.message;
+    // Parsing doesn't save; store the merged profile right away, before the
+    // popup can close.
+    if (parsed.changed) autosave.flush();
   } catch {
     resumeStatusMessage = "Couldn't reach Swiftly's parser. You can still fill in your info manually.";
   }

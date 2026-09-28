@@ -1,5 +1,4 @@
 import SafariServices
-import os.log
 
 // Bridges Safari's native-messaging protocol to the shared ProfileMessageHandler,
 // which also backs the desktop app's WKWebView bridge (DesktopWebBridge) so both

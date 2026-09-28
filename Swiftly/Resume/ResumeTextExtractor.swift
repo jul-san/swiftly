@@ -3,10 +3,6 @@ import PDFKit
 
 struct ResumeTextExtractor {
 
-    nonisolated func extract(from url: URL) -> Result<String, ParsingError> {
-        extractCandidates(from: url).map { $0[0] }
-    }
-
     // The resume's text read two ways: rebuilt from glyph positions (columns separated by
     // tabs, see `layoutText`), then PDFKit's own `page.string`. Callers should parse each
     // and keep the better result: the rebuilt text depends on glyph bounds, which some
