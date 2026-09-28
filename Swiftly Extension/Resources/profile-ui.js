@@ -245,6 +245,28 @@ export function renderPersonalFields(personal, onPatch) {
       label: "Location", value: personal.location, placeholder: "San Francisco, CA",
       onInput: (v) => onPatch({ location: v }),
     }),
+    // Structured address for forms that ask field by field (Workday,
+    // some Greenhouse/Gem forms). "Location" stays the one-line answer.
+    labeledInput({
+      label: "Street address", value: personal.addressLine1, placeholder: "123 Main St",
+      onInput: (v) => onPatch({ addressLine1: v || null }),
+    }),
+    labeledInput({
+      label: "City", value: personal.city, placeholder: "San Francisco",
+      onInput: (v) => onPatch({ city: v || null }),
+    }),
+    labeledInput({
+      label: "State / province", value: personal.state, placeholder: "CA",
+      onInput: (v) => onPatch({ state: v || null }),
+    }),
+    labeledInput({
+      label: "ZIP / postal code", value: personal.postalCode, placeholder: "94105",
+      onInput: (v) => onPatch({ postalCode: v || null }),
+    }),
+    labeledInput({
+      label: "Country", value: personal.country, placeholder: "United States",
+      onInput: (v) => onPatch({ country: v || null }),
+    }),
     labeledInput({
       label: "LinkedIn", value: personal.linkedinURL, placeholder: "linkedin.com/in/…", type: "url",
       onInput: (v) => onPatch({ linkedinURL: v }),
