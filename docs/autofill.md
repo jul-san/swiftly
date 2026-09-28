@@ -13,6 +13,9 @@ documentation and open-source autofill projects supplied the DOM
 conventions. Gem's form renders in JavaScript and publishes no form schema.
 This session's network could not open the live job sites, so Ashby, Gem and
 Workday are not yet verified against a saved live page.
+Workday's My Information step was checked against a saved live page in late
+September 2026 (`tests/fixtures/workday-myinfo-snapshot.html`); its other steps
+are still unverified.
 
 | | Greenhouse (job-boards) | Ashby | Gem | Workday |
 |---|---|---|---|---|
@@ -61,4 +64,4 @@ content.js → engine.runAutofill
 
 ## Testing
 
-`npm install && npm test` runs pure unit tests (matching, catalog) and headless-Chromium DOM tests. The DOM tests serve fixtures under real ATS hostnames and inject content scripts in manifest order. The Greenhouse fixture runs real React and React Select. `greenhouse-snapshot.html` is the real job-boards markup with the employer name removed. On macOS, run `npx playwright install chromium` once first.
+`npm install && npm test` runs pure unit tests (matching, catalog) and headless-Chromium DOM tests. The DOM tests serve fixtures under real ATS hostnames and inject content scripts in manifest order. The Greenhouse fixture runs real React and React Select. `greenhouse-snapshot.html` is the real job-boards markup with the employer name removed. `workday-myinfo-snapshot.html` is the real Workday My Information markup, with an emulation script for its listbox popups and prompts. On macOS, run `npx playwright install chromium` once first.

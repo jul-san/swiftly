@@ -130,6 +130,8 @@ function isRequired(el, groupMembers) {
   if (targets.some(t => t.required || t.getAttribute?.("aria-required") === "true")) return true;
   const fs = targets[0].closest?.("fieldset, [role=radiogroup], [role=group]");
   if (fs && (fs.getAttribute("aria-required") === "true")) return true;
+  // Workday puts aria-required on a plain div wrapping its radios.
+  if (groupMembers && targets[0].parentElement?.closest("[aria-required='true']")) return true;
   const labelEl = el.labels?.[0] ?? (el.id ? el.ownerDocument.getElementById(`${el.id}-label`) : null);
   if (labelEl && /\*/.test(labelEl.textContent)) return true;
   return false;

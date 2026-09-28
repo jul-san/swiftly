@@ -47,7 +47,14 @@
     [/lastYearAttended/i, "education.endDate"],
   ];
 
-  const SKIP = /phone-device-type|phoneType|countryPhoneCode|phone-code|preferredCheck|preferredName--|password|verifyPassword|createAccountCheckbox/i;
+  const SKIP = /countryPhoneCode|phone-code|phone-sms-opt-in|preferredCheck|preferredName--|password|verifyPassword|createAccountCheckbox/i;
+
+  // Each listbox button carries an unlabelled, visually hidden text input
+  // holding the selected option's internal id. The button is the field.
+  function isListboxValueShim(el) {
+    return el.tagName === "INPUT" && el.type === "text" && !el.id && !el.name
+      && el.previousElementSibling?.matches("button[aria-haspopup=listbox]");
+  }
 
   function identifiers(el) {
     const auto = el.getAttribute("data-automation-id") || "";
@@ -106,7 +113,7 @@
     },
     stepName,
     shouldSkipElement(el) {
-      if (identifiers(el).some(i => SKIP.test(i))) return true;
+      if (identifiers(el).some(i => SKIP.test(i)) || isListboxValueShim(el)) return true;
       // Self-identification forms ask for a name + date as a signature.
       if (isSelfIdentifyStep(el.ownerDocument) && el.tagName === "INPUT" && !/^(checkbox|radio)$/.test(el.type)) return true;
       return false;
@@ -122,7 +129,7 @@
       const out = [];
       for (const box of root.querySelectorAll("[data-automation-id='multiSelectContainer']")) {
         const input = box.querySelector("input[data-automation-id='searchBox'], input");
-        if (!input || !swiftlyIsRendered(input)) continue;
+        if (!input || !swiftlyIsRendered(input) || adapter.shouldSkipElement(input)) continue;
         const container = box.closest("[data-automation-id^='formField-']") ?? box.parentElement;
         const selected = [...(container?.querySelectorAll("[data-automation-id='selectedItem']") ?? [])].map(s => swiftlyText(s)).filter(Boolean);
         const labelEl = input.labels?.[0] ?? container?.querySelector("label, legend");
