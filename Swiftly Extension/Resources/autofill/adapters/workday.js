@@ -175,7 +175,9 @@
             const aria = b.getAttribute("aria-label") || "";
             if (/^add\b/i.test(aria) && labelRe.test(aria.replace(/^add\s*/i, ""))) return true;
             if (!/^add( another)?$/i.test(swiftlyText(b))) return false;
-            const group = b.closest("[role=group], section, fieldset, [data-automation-id]");
+            // Live pages give the button itself data-automation-id="add-button",
+            // so start the search above it.
+            const group = b.parentElement?.closest("[role=group], section, fieldset");
             const heading = group?.querySelector("h2, h3, h4, legend, [role=heading]");
             return heading ? labelRe.test(swiftlyText(heading)) : false;
           });

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!--
+  Workday "My Experience" step, from a saved live page (September 2026,
+  <tenant>.wd5.myworkdayjobs.com/.../apply/applyManually). The markup inside
+  applyFlowPage is the real DOM with generated class names, inline styles and
+  icons removed and the job renamed. The page opens with one empty Work
+  Experience block and one empty Education block; each section's
+  "Add Another" button (data-automation-id="add-button", no aria-label)
+  appends another block with the next internal number. Dates are MM / YYYY
+  spinbutton inputs; School and Field of Study are prompts that search on
+  Enter; Degree is a listbox button.
+  The script below emulates that behavior. Values are recorded only from
+  events (window.__wd), the way React state is.
+-->
+<html lang="en-US"><head><meta charset="utf-8"><title>Workday My Experience fixture</title>
+<style>
+  button[aria-haspopup=listbox] + input[type=text] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  input[type=checkbox] { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<main>
+<div data-automation-id="applyFlowPage"><div><div dir="ltr"><button type="button" data-automation-id="backToJobPosting" role="link"><span></span><span>Back to Job Posting</span></button></div><h2 data-automation-id="jobTitleHeading">Example Engineer II</h2></div><div aria-label="Application Progress"><ol data-automation-id="progressBar"><li data-automation-id="progressBarCompletedStep"><div><div color="#002288"></div><div><div color="#002288"><span></span></div></div><div color="#002288"></div></div><label aria-live="polite">completed step 1 of 6</label><label>My Information</label></li><li data-automation-id="progressBarActiveStep"><div><div color="#002288"></div><div><div color="#002288"></div></div><div color="#002288"></div></div><label aria-live="polite">current step 2 of 6</label><label>My Experience</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 3 of 6</label><label>Application Questions</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 4 of 6</label><label>Voluntary Disclosures</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 5 of 6</label><label>Self Identify</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 6 of 6</label><label>Review</label></li></ol></div><div style=""><div><h3 tabindex="-1">My Experience</h3><div><abbr>*</abbr> Indicates a required field</div><div data-automation-id="applyFlowMyExpPage"><div role="group" aria-labelledby="Work-Experience-section"><h4 id="Work-Experience-section">Work Experience</h4><div role="group" aria-labelledby="Work-Experience-1-panel"><div><h5 id="Work-Experience-1-panel">Work Experience 1</h5></div><div data-fkit-id="workExperience-9--null"><div data-automation-id="formField-jobTitle" data-fkit-id="workExperience-9--jobTitle"><label for="workExperience-9--jobTitle"><span>Job Title<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="workExperience-9--jobTitle" name="jobTitle" aria-required="true" value=""></div><div></div></div></div><div data-automation-id="formField-companyName" data-fkit-id="workExperience-9--companyName"><label for="workExperience-9--companyName"><span>Company<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="workExperience-9--companyName" name="companyName" aria-required="true" value=""></div><div></div></div></div><div data-automation-id="formField-location" data-fkit-id="workExperience-9--location"><label for="workExperience-9--location">Location</label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="workExperience-9--location" name="location" aria-required="false" value=""></div><div></div></div></div><div data-automation-id="formField-currentlyWorkHere" data-fkit-id="workExperience-9--currentlyWorkHere"><label for="workExperience-9--currentlyWorkHere">I currently work here</label><div><div><div><div><input id="workExperience-9--currentlyWorkHere" type="checkbox" aria-checked="false" name="currentlyWorkHere" aria-required="false"><span></span><div><div></div></div></div></div></div><div></div></div></div><div><div data-automation-id="formField-startDate" data-fkit-id="workExperience-9--startDate"><fieldset><legend><label id="label13"><span>From<abbr aria-hidden="true">*</abbr></span></label></legend><div><div><div aria-hidden="true" id="helpText-workExperience-9--startDate">current value is MM/YYYY</div><div id="workExperience-9--startDate" aria-labelledby="hiddenDateValueId-workExperience-9--startDate" role="group" data-automation-id="dateInputWrapper"><div tabindex="-1"><div id="workExperience-9--startDate-dateSectionMonth" tabindex="-1"><div aria-hidden="true" id="workExperience-9--startDate-dateSectionMonth-display" data-automation-id="dateSectionMonth-display">MM</div><input role="spinbutton" aria-describedby="helpText-workExperience-9--startDate" aria-label="Month" aria-valuemax="12" aria-valuemin="1" aria-valuetext="MM" id="workExperience-9--startDate-dateSectionMonth-input" data-automation-id="dateSectionMonth-input" value=""></div><div>/</div><div id="workExperience-9--startDate-dateSectionYear" tabindex="0"><div aria-hidden="true" id="workExperience-9--startDate-dateSectionYear-display" data-automation-id="dateSectionYear-display">YYYY</div><input role="spinbutton" aria-label="Year" aria-valuemax="9999" aria-valuemin="1" aria-valuetext="YYYY" id="workExperience-9--startDate-dateSectionYear-input" tabindex="-1" data-automation-id="dateSectionYear-input" value=""></div></div><div aria-label="Calendar" aria-describedby="" data-automation-id="dateIcon" role="button" tabindex="0"><span></span></div></div><div hidden="" id="helpText-workExperience-9--startDate">use right and left arrows to navigate spin buttons</div></div><div></div></div></fieldset></div><div data-automation-id="formField-endDate" data-fkit-id="workExperience-9--endDate"><fieldset><legend><label id="label15"><span>To<abbr aria-hidden="true">*</abbr></span></label></legend><div><div><div aria-hidden="true" id="helpText-workExperience-9--endDate">current value is MM/YYYY</div><div id="workExperience-9--endDate" aria-labelledby="hiddenDateValueId-workExperience-9--endDate" role="group" data-automation-id="dateInputWrapper"><div tabindex="-1"><div id="workExperience-9--endDate-dateSectionMonth" tabindex="-1"><div aria-hidden="true" id="workExperience-9--endDate-dateSectionMonth-display" data-automation-id="dateSectionMonth-display">MM</div><input role="spinbutton" aria-describedby="helpText-workExperience-9--endDate" aria-label="Month" aria-valuemax="12" aria-valuemin="1" aria-valuetext="MM" id="workExperience-9--endDate-dateSectionMonth-input" data-automation-id="dateSectionMonth-input" value=""></div><div>/</div><div id="workExperience-9--endDate-dateSectionYear" tabindex="0"><div aria-hidden="true" id="workExperience-9--endDate-dateSectionYear-display" data-automation-id="dateSectionYear-display">YYYY</div><input role="spinbutton" aria-label="Year" aria-valuemax="9999" aria-valuemin="1" aria-valuetext="YYYY" id="workExperience-9--endDate-dateSectionYear-input" tabindex="-1" data-automation-id="dateSectionYear-input" value=""></div></div><div aria-label="Calendar" aria-describedby="" data-automation-id="dateIcon" role="button" tabindex="0"><span></span></div></div><div hidden="" id="helpText-workExperience-9--endDate">use right and left arrows to navigate spin buttons</div></div><div></div></div></fieldset></div></div><div data-automation-id="formField-roleDescription" data-fkit-id="workExperience-9--roleDescription"><label for="workExperience-9--roleDescription">Role Description</label><div><div><textarea id="workExperience-9--roleDescription" aria-required="false"></textarea></div><div></div></div></div></div></div><div><div><div><button data-automation-id="add-button" font-size="14" height="40">Add Another</button></div></div></div></div><div data-automation-id="smartDivider" data-smart-divider="true" style=""></div><div role="group" aria-labelledby="Education-section"><h4 id="Education-section">Education</h4><div><div data-automation-id="instructionalText"><p style="text-align:left"><span>Please type all or part of your School name and <b>press<span>&nbsp;</span></b></span><b>Enter</b><span><span>&nbsp;</span>to select. If your School does not appear in the drop-down, type<span>&nbsp;</span></span><b>Other</b><span><span>&nbsp;</span>and <b>press<span>&nbsp;</span></b></span><b>Enter</b><span><span>&nbsp;</span>to move forward.</span></p></div></div><div role="group" aria-labelledby="Education-1-panel"><div><h5 id="Education-1-panel">Education 1</h5></div><div data-fkit-id="education-10--null"><div data-automation-id="formField-school" data-fkit-id="education-10--school"><label for="education-10--school"><span>School or University<abbr aria-hidden="true">*</abbr></span></label><div><div><div><div dir="ltr" tabindex="-1" data-automation-id="multiSelectContainer" id="4bc69a31-989d-4dc1-b6b9-40e78489bb55" data-uxi-element-id="4bc69a31-989d-4dc1-b6b9-40e78489bb55" data-uxi-widget-type="multiselect"><div data-automation-id="multiselectInputContainer" dir="ltr" color="#0875e1"><div data-automation-hiddensearch="false"><input enterkeyhint="search" dir="ltr" placeholder="Search" aria-invalid="false" aria-describedby="034d4e45-0813-4298-aada-3a2f233fa334" aria-disabled="false" aria-required="true" autocomplete="off" tabindex="0" data-uxi-element-id="selectinput-4bc69a31-989d-4dc1-b6b9-40e78489bb55" data-uxi-widget-type="selectinput" data-uxi-multiselect-id="4bc69a31-989d-4dc1-b6b9-40e78489bb55" id="education-10--school" value=""><div data-automation-id="promptSelectionLabel"></div><div id="034d4e45-0813-4298-aada-3a2f233fa334" aria-hidden="true" data-automation-id="promptAriaInstruction">0 items selected</div></div><span data-automation-id="promptIcon" aria-hidden="true" aria-invalid="false" tabindex="-2" data-uxi-element-id="promptIcon-4bc69a31-989d-4dc1-b6b9-40e78489bb55" data-uxi-widget-type="selectinputicon" data-uxi-multiselect-id="4bc69a31-989d-4dc1-b6b9-40e78489bb55" data-uxi-selectinputicon-type="promptIcon"></span></div></div></div></div><div></div></div></div><div data-automation-id="formField-degree" data-fkit-id="education-10--degree"><label for="education-10--degree"><span>Degree<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><div><button aria-haspopup="listbox" type="button" value="" aria-label="Degree Select One Required" name="degree" id="education-10--degree">Select One</button><input type="text" value=""><span></span></div></div><div></div></div></div><div><div><div data-automation-id="formField-fieldOfStudy" data-fkit-id="education-10--fieldOfStudy"><label for="education-10--fieldOfStudy">Field of Study</label><div><div><div><div dir="ltr" tabindex="-1" data-automation-id="multiSelectContainer" id="adb9a21e-8ff9-4fdf-9086-e542b98a9d8f" data-uxi-element-id="adb9a21e-8ff9-4fdf-9086-e542b98a9d8f" data-uxi-widget-type="multiselect"><div data-automation-id="multiselectInputContainer" dir="ltr" color="#0875e1"><div data-automation-hiddensearch="false"><input enterkeyhint="search" dir="ltr" placeholder="Search" aria-invalid="false" aria-describedby="601ca433-c5e7-4b43-95ac-fb7cfa3dc73f" aria-disabled="false" aria-required="false" autocomplete="off" tabindex="0" data-uxi-element-id="selectinput-adb9a21e-8ff9-4fdf-9086-e542b98a9d8f" data-uxi-widget-type="selectinput" data-uxi-multiselect-id="adb9a21e-8ff9-4fdf-9086-e542b98a9d8f" id="education-10--fieldOfStudy" value=""><div data-automation-id="promptSelectionLabel"></div><div id="601ca433-c5e7-4b43-95ac-fb7cfa3dc73f" aria-hidden="true" data-automation-id="promptAriaInstruction">0 items selected</div></div><span data-automation-id="promptIcon" aria-hidden="true" aria-invalid="false" tabindex="-2" data-uxi-element-id="promptIcon-adb9a21e-8ff9-4fdf-9086-e542b98a9d8f" data-uxi-widget-type="selectinputicon" data-uxi-multiselect-id="adb9a21e-8ff9-4fdf-9086-e542b98a9d8f" data-uxi-selectinputicon-type="promptIcon"></span></div></div></div></div><div></div></div></div></div><button type="button" aria-label="The field will alphabetically return the first 100 results and can also return specified matches." style="margin-left: 8px;"><span></span></button></div></div></div><div><div><div><button data-automation-id="add-button" font-size="14" height="40">Add Another</button></div></div></div></div><div data-automation-id="smartDivider" data-smart-divider="true" style=""></div><div role="group" aria-labelledby="Resume/CV-section"><h4 id="Resume/CV-section">Resume/CV</h4><div data-fkit-id="resumeAttachments--null"><p><div data-automation-id="formField-" data-fkit-id="resumeAttachments--attachments"><label id="label12"><span>Upload a file (5MB max)<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 704px; min-width: 280px;"><div data-automation-id="attachments-FileUpload" aria-labelledby="label12"><div><div data-automation-id="file-upload-drop-zone" color="#0875e1"><div><span></span></div><div>Drop files here</div><div><div>or</div><button type="button" data-automation-id="select-files" id="resumeAttachments--attachments"><span>Select files</span></button></div></div><input data-automation-id="file-upload-input-ref" type="file" multiple=""></div><div></div></div></div><div></div></div></div></p></div></div><div data-automation-id="smartDivider" data-smart-divider="true" style=""></div><div role="group" aria-labelledby="Websites-section"><h4 id="Websites-section">Websites</h4><div style="font-size: 0.75rem;">Add any relevant websites.</div><div><div><div><button data-automation-id="add-button" font-size="14" height="40">Add</button></div></div></div></div></div></div><div data-automation-id="pageFooter"><div><div><button data-automation-id="pageFooterBackButton" font-size="14" height="40">Back</button></div></div><div></div><div><div><button data-automation-id="pageFooterNextButton" font-size="14" height="40">Save and Continue</button></div></div></div></div></div>
+</main>
+<script>
+  window.__wd = {};
+  window.__untrustedNext = 0;
+  window.__adds = { workExperience: 0, education: 0, websites: 0 };
+  const OPTIONS = { degree: ["High School or Equivalent", "Associate's Degree", "Bachelor's Degree", "Master's Degree", "Doctorate", "Other"] };
+  const PROMPTS = {
+    school: ["Example State University", "Example Community College", "Sample Institute of Technology", "Other"],
+    fieldOfStudy: ["Computer Engineering", "Computer Science", "Economics", "Mathematics"],
+  };
+
+  document.addEventListener("input", e => { if (e.target.id) window.__wd[e.target.id] = e.target.value; }, true);
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (t.type === "checkbox") window.__wd[t.id] = t.checked;
+    else if (t.type === "file") window.__wd["resume"] = t.files[0]?.name;
+    else if (t.id) window.__wd[t.id] = t.value;
+  }, true);
+  document.querySelector("[data-automation-id=pageFooterNextButton]").addEventListener("click", e => {
+    if (!e.isTrusted) window.__untrustedNext++;
+  });
+
+  // "Add Another": clone the section's first block with the next number.
+  const templates = {};
+  for (const [kind, section] of [["workExperience", "Work-Experience"], ["education", "Education"]]) {
+    const panel = document.querySelector(`[aria-labelledby="${section}-1-panel"]`);
+    templates[kind] = { html: panel.outerHTML, num: panel.querySelector(`[id^="${kind}-"]`).id.match(/-(\d+)--/)[1], section };
+  }
+  let nextNum = 11;
+  document.addEventListener("click", e => {
+    const add = e.target.closest("[data-automation-id=add-button]");
+    if (!add) return;
+    const group = add.closest("[role=group]");
+    const heading = group.querySelector("h4").textContent;
+    const kind = heading === "Work Experience" ? "workExperience" : heading === "Education" ? "education" : "websites";
+    window.__adds[kind]++;
+    if (kind === "websites") return;
+    const t = templates[kind];
+    const count = group.querySelectorAll(":scope > div > [role=group], :scope > [role=group]").length + 1;
+    const n = nextNum++;
+    const html = t.html.replaceAll(`${kind}-${t.num}`, `${kind}-${n}`)
+      .replaceAll(`${t.section}-1-panel`, `${t.section}-${count}-panel`)
+      .replace(/(Work Experience|Education) 1</, `$1 ${count}<`);
+    setTimeout(() => {
+      const panels = group.querySelectorAll(`[aria-labelledby^="${t.section}-"][aria-labelledby$="-panel"]`);
+      panels[panels.length - 1].insertAdjacentHTML("afterend", html);
+    }, 200);
+  });
+
+  function closePopup() { document.querySelectorAll("[data-automation-widget=wd-popup]").forEach(p => p.remove()); }
+  function popup(owner, entries) {
+    closePopup();
+    setTimeout(() => {
+      const div = document.createElement("div"); div.setAttribute("data-automation-widget", "wd-popup");
+      const ul = document.createElement("ul"); ul.setAttribute("role", "listbox"); div.append(ul);
+      for (const [label, onPick] of entries) {
+        const li = document.createElement("li"); li.setAttribute("role", "option");
+        const d = document.createElement("div"); d.setAttribute("data-automation-id", "promptOption"); d.setAttribute("data-automation-label", label); d.textContent = label;
+        li.append(d); li.addEventListener("click", onPick); ul.append(li);
+      }
+      document.body.append(div);
+    }, 150);
+  }
+  document.addEventListener("click", e => {
+    const btn = e.target.closest("button[aria-haspopup=listbox]");
+    if (!btn) return;
+    popup(btn.id, OPTIONS[btn.name].map(label => [label, () => {
+      btn.textContent = label; btn.nextElementSibling.value = label; window.__wd[btn.id] = label; closePopup();
+    }]));
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") return closePopup();
+    const input = e.target.closest?.("[data-automation-id=multiSelectContainer] input");
+    if (!input || e.key !== "Enter") return;
+    const kind = input.id.endsWith("--school") ? "school" : "fieldOfStudy";
+    const q = input.value.toLowerCase();
+    popup(input.id, PROMPTS[kind].filter(l => l.toLowerCase().includes(q)).map(label => [label, () => {
+      const box = input.closest("[data-automation-id=multiSelectContainer]");
+      const pill = document.createElement("div"); pill.setAttribute("data-automation-id", "selectedItem"); pill.textContent = label;
+      const list = document.createElement("ul"); list.setAttribute("role", "listbox"); list.setAttribute("data-automation-id", "selectedItemList");
+      const li = document.createElement("li"); li.append(pill); list.append(li);
+      box.querySelector("[data-automation-id=multiselectInputContainer]").append(list);
+      input.value = ""; window.__wd[input.id] = label; closePopup();
+    }]));
+  });
+</script>
+</body></html>
