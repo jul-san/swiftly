@@ -13,7 +13,7 @@ function el(tag, className, children) {
   return node;
 }
 
-function uid() {
+export function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random()}`;
 }
 
@@ -84,6 +84,12 @@ export function createAccordion({ title, defaultOpen = false }) {
 }
 
 // ─── Labeled field helpers ────────────────────────────────────────────────
+
+// A labelled group around a control that isn't a single input (chip lists,
+// checkbox groups).
+export function fieldGroup(label, control) {
+  return el("div", "mini-field", [el("span", "mini-field-label", [label]), control]);
+}
 
 export function selectField({ label, value, options, onChange }) {
   const wrap = el("label", "mini-field");
@@ -274,14 +280,18 @@ export function renderRepeatableList({
 
     list.forEach((entry, i) => {
       const card = el("div", "entry-card");
-      const { title, subtitle, meta } = summary(entry);
 
       const head = el("div", "entry-card-head");
-      const summaryText = el("div", "entry-card-summary", [
-        el("div", "entry-card-title", [title || "Untitled"]),
-        subtitle ? el("div", "entry-card-subtitle", [subtitle]) : null,
-        meta ? el("div", "entry-card-meta", [meta]) : null,
-      ]);
+      const summaryText = el("div", "entry-card-summary");
+      const renderSummary = () => {
+        const { title, subtitle, meta } = summary(entry);
+        summaryText.replaceChildren(
+          el("div", "entry-card-title", [title || "Untitled"]),
+          ...(subtitle ? [el("div", "entry-card-subtitle", [subtitle])] : []),
+          ...(meta ? [el("div", "entry-card-meta", [meta])] : []),
+        );
+      };
+      renderSummary();
       const headControls = el("span", "entry-card-controls", [
         el("span", "accordion-chevron entry-chevron"),
       ]);
@@ -293,8 +303,7 @@ export function renderRepeatableList({
 
       function patchEntry(patch) {
         Object.assign(entry, patch);
-        const s = summary(entry);
-        summaryText.querySelector(".entry-card-title").textContent = s.title || "Untitled";
+        renderSummary();
         emit();
       }
 
@@ -346,15 +355,12 @@ export function renderSkillsFields(skills, onPatch) {
     ["other", "Other skills", "e.g. Agile"],
   ];
   for (const [key, label, placeholder] of categories) {
-    const field = el("div", "mini-field");
-    field.append(el("span", "mini-field-label", [label]));
-    field.append(createChipList(skills[key], placeholder, (list) => onPatch({ [key]: list })));
-    wrap.append(field);
+    wrap.append(fieldGroup(label, createChipList(skills[key], placeholder, (list) => onPatch({ [key]: list }))));
   }
   return wrap;
 }
 
-// ─── Section factories used by popup.js ───────────────────────────────────
+// ─── Entry fields (used by profile-editor.js) ───────────────────────────────
 
 export function buildEducationFields(entry, patchEntry) {
   const wrap = el("div", "section-fields");
@@ -399,13 +405,9 @@ export function buildProjectFields(entry, patchEntry) {
     labeledInput({ label: "Project name", value: entry.name, placeholder: "Starlink Observer", onInput: v => patchEntry({ name: v }) }),
     labeledInput({ label: "URL / repository", value: entry.url, placeholder: "github.com/…", type: "url", onInput: v => patchEntry({ url: v }) }),
   );
-  const field = el("div", "mini-field");
-  field.append(el("span", "mini-field-label", ["Technologies"]));
-  field.append(createChipList(entry.technologies, "e.g. TypeScript", (list) => patchEntry({ technologies: list })));
-  wrap.append(field);
+  wrap.append(fieldGroup("Technologies", createChipList(entry.technologies, "e.g. TypeScript", (list) => patchEntry({ technologies: list }))));
 
   wrap.append(createBulletsTextarea(entry.bullets, (bullets) => patchEntry({ bullets })));
   return wrap;
 }
 
-export { uid };

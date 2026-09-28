@@ -75,25 +75,18 @@
         const buttons = [...yesno.querySelectorAll("button")].filter(b => /^(yes|no)$/i.test(swiftlyText(b)) || b.hasAttribute("data-option"));
         if (buttons.length < 2 || entry.querySelector("input[type=radio], input[type=checkbox]")) continue;
         const pressed = buttons.find(b => b.getAttribute("aria-pressed") === "true" || /\b(active|selected|_active)/.test(b.className));
-        out.push({
+        out.push(customField({
           kind: "buttonGroup",
           element: buttons[0],
           members: buttons,
           options: buttons.map(b => ({ element: b, text: swiftlyText(b) || b.getAttribute("data-option") })),
-          tagName: "button",
           inputType: "yesno",
           name: entry.getAttribute("data-field-path") || "",
-          idAttr: "",
-          automationId: "",
-          ariaLabel: "",
-          placeholder: "",
-          autocomplete: "",
           label: cleanLabel(entryTitle(entry)),
-          nearbyText: "",
           required: !!entry.querySelector("[class*='required']") || /\*\s*$/.test(entryTitle(entry)),
           currentValue: pressed ? swiftlyText(pressed) : "",
           isEmpty: !pressed,
-        });
+        }));
       }
       return out;
     },
@@ -108,5 +101,5 @@
     resumeSettle: { quietMs: 800, maxMs: 5000 },
   };
 
-  (globalThis.SWIFTLY_ADAPTERS || (globalThis.SWIFTLY_ADAPTERS = [])).push(adapter);
+  registerSwiftlyAdapter(adapter);
 })();

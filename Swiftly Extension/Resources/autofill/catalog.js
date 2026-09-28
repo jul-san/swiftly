@@ -7,7 +7,7 @@
 //
 // Plain script (see matching.js); in Node it pulls its helpers via require.
 
-/* global normalizeText, tokenizeIdentifier, answerPolarity, parseLooseDate, cleanLabel */
+/* global normalizeText, tokenizeIdentifier, answerPolarity, parseLooseDate, cleanLabel, US_STATES, MONTHS */
 if (typeof module !== "undefined" && module.exports && typeof normalizeText === "undefined") {
   Object.assign(globalThis, require("./matching.js"));
 }
@@ -141,10 +141,8 @@ function controlAllows(def, field) {
   const family = controlFamily(field);
   if (!def.controls) return true;
   if (def.controls.includes(family)) return true;
-  // Multi-select checkbox groups can answer "choice" questions in category form.
   // Multi-select checkbox groups answer "choice" questions ("mark all that apply").
-  if (family === "checkboxGroup" && def.controls.includes("choice")) return true;
-  return false;
+  return family === "checkboxGroup" && def.controls.includes("choice");
 }
 
 function sourceTexts(field) {
@@ -229,12 +227,9 @@ function classifyField(field, hintKey = null) {
   for (const def of SWIFTLY_FIELDS) {
     if (def.blocked) continue;
     if (def.section && def.section !== section) continue;
-    // Inside a repeatable education/experience block only that block's keys apply.
-    if (!def.section && section && (def.key.startsWith("education.") || def.key.startsWith("experience."))) continue;
-    if (section && !def.section && !def.key.startsWith("documents.")) {
-      // e.g. a "Location" inside an experience block is experience.location, not personal.location
-      continue;
-    }
+    // Inside a repeatable education/experience block only that block's keys (and
+    // documents) apply: a "Location" there is experience.location, not personal.location.
+    if (section && !def.section && !def.key.startsWith("documents.")) continue;
     if (!controlAllows(def, field)) continue;
     const { score, evidence } = scoreDefinition(def, field, hintKey);
     if (score > 0) results.push({ key: def.key, score, evidence });
@@ -298,12 +293,8 @@ function splitLocation(location) {
   if (parts.length < 2 || parts.length > 3) return {};
   const [city, state] = parts;
   const st = normalizeText(state);
-  const isState = /^[a-z]{2}$/.test(st) || Object.values(typeof US_STATES !== "undefined" ? US_STATES : {}).includes(st);
+  const isState = /^[a-z]{2}$/.test(st) || Object.values(US_STATES).includes(st);
   return isState ? { city, state } : {};
-}
-
-function polarityOf(stored) {
-  return answerPolarity(stored);
 }
 
 function dateAnswer(text) {
@@ -312,12 +303,15 @@ function dateAnswer(text) {
   return d;
 }
 
+// "Decline to answer" wording in EEO options and stored EEO answers.
+const DECLINE_ANSWER = /\b(decline|prefer not|do not wish|dont wish|do not want|dont want|not to (answer|say|disclose|self identify))\b/;
+
 // Canonical race/ethnicity categories for matching stored values against
 // option text. Multiple categories per text are allowed (e.g. "Two or more").
 function raceCategories(text) {
   const t = normalizeText(text).replace(/\bnot hispanic( or latin(o|a|x|e))?\b/g, " ").replace(/\s+/g, " ").trim();
   if (!t) return [];
-  if (DECLINE_RACE.test(t)) return ["decline"];
+  if (DECLINE_ANSWER.test(t)) return ["decline"];
   if (/\btwo or more\b|\bmultiracial\b|\bmixed\b/.test(t)) return ["multiple"];
   const cats = [];
   if (/\bhispanic\b|\blatin(o|a|x|e)\b|\bspanish origin\b/.test(t)) cats.push("hispanic");
@@ -333,12 +327,16 @@ function raceCategories(text) {
   if (!cats.length && /^other\b/.test(t)) cats.push("other");
   return cats;
 }
-const DECLINE_RACE = /\b(decline|prefer not|do not wish|dont wish|do not want|dont want|not to (answer|say|disclose|self identify))\b/;
+
+// The profile stores race/ethnicity as a comma-separated list of the editor's options.
+function storedRaceCategories(csv) {
+  return (csv ?? "").split(",").map(s => s.trim()).filter(Boolean).flatMap(raceCategories);
+}
 
 function genderCategories(text) {
   const t = normalizeText(text);
   if (!t) return [];
-  if (DECLINE_RACE.test(t)) return ["decline"];
+  if (DECLINE_ANSWER.test(t)) return ["decline"];
   if (/\bnon ?binary\b|\bgender ?(queer|fluid|nonconforming)\b/.test(t)) return ["nonbinary"];
   if (/^(wo)?man$|^(fe)?male$|^(a )?(wo)?man\b|^(fe)?male\b|^(cis(gender)? )?(wo)?man\b/.test(t)) {
     return [/\bwoman\b|\bfemale\b/.test(t) ? "woman" : "man"];
@@ -359,7 +357,7 @@ function resolveAnswer(key, profile, field = {}, context = {}) {
   const exp = (profile?.experience ?? [])[idx];
   const text = (v) => (nonEmpty(v) ? { kind: "text", value: nonEmpty(v) } : null);
   const bool = (v) => {
-    const pol = polarityOf(v);
+    const pol = answerPolarity(v);
     return pol ? { kind: "boolean", value: pol } : null;
   };
   const date = (v) => {
@@ -399,8 +397,8 @@ function resolveAnswer(key, profile, field = {}, context = {}) {
     case "eligibility.workAuthorization": return bool(p.workAuthorization);
     case "eligibility.requiresSponsorship": return bool(p.requiresSponsorship);
     case "eligibility.authorizedWithoutSponsorship": {
-      const auth = polarityOf(p.workAuthorization);
-      const sponsor = polarityOf(p.requiresSponsorship);
+      const auth = answerPolarity(p.workAuthorization);
+      const sponsor = answerPolarity(p.requiresSponsorship);
       if (auth === "yes" && sponsor === "no") return { kind: "boolean", value: "yes" };
       if (auth === "no" || sponsor === "yes") return { kind: "boolean", value: "no" };
       return null;
@@ -442,14 +440,12 @@ function resolveAnswer(key, profile, field = {}, context = {}) {
       return cats.length ? { kind: "category", values: cats, canon: genderCategories } : null;
     }
     case "eeo.race": {
-      const stored = (p.raceEthnicity ?? "").split(",").map(s => s.trim()).filter(Boolean);
-      const cats = [...new Set(stored.flatMap(raceCategories))];
+      const cats = [...new Set(storedRaceCategories(p.raceEthnicity))];
       if (!cats.length) return null;
       return { kind: "category", values: cats, canon: raceCategories, multiValue: true };
     }
     case "eeo.hispanic": {
-      const stored = (p.raceEthnicity ?? "").split(",").map(s => s.trim()).filter(Boolean);
-      const cats = stored.flatMap(raceCategories);
+      const cats = storedRaceCategories(p.raceEthnicity);
       if (cats.includes("hispanic")) return { kind: "boolean", value: "yes" };
       if (cats.includes("decline")) return { kind: "boolean", value: "decline" };
       return null; // not listing Hispanic is not the same as answering "No"
@@ -476,7 +472,7 @@ function formatDatePart(d, part, { style } = {}) {
     if (d.month == null) return null;
     if (style === "number") return String(d.month + 1);
     if (style === "number2") return String(d.month + 1).padStart(2, "0");
-    return (typeof MONTHS !== "undefined" ? MONTHS : [])[d.month]?.replace(/^./, c => c.toUpperCase()) ?? null;
+    return MONTHS[d.month]?.replace(/^./, c => c.toUpperCase()) ?? null;
   }
   // Whole-date text input: honor an MM/YYYY-style placeholder when present.
   if (style === "mm/yyyy") return d.month != null && d.year != null ? `${String(d.month + 1).padStart(2, "0")}/${d.year}` : null;

@@ -40,20 +40,19 @@
         seenContainers.add(container);
         const title = container.querySelector(":scope > label, :scope > legend, :scope > div > label, :scope > [id$='-label']");
         const pressed = buttons.find(b => b.getAttribute("aria-pressed") === "true" || b.getAttribute("aria-checked") === "true" || b.getAttribute("data-state") === "on");
-        out.push({
+        out.push(customField({
           kind: "buttonGroup", element: buttons[0], members: buttons,
           options: buttons.map(b => ({ element: b, text: swiftlyText(b) })),
-          tagName: "button", inputType: "yesno", name: "", idAttr: "", automationId: "",
-          ariaLabel: "", placeholder: "", autocomplete: "",
-          label: cleanLabel(swiftlyText(title)), nearbyText: "",
+          inputType: "yesno",
+          label: cleanLabel(swiftlyText(title)),
           required: /\*/.test(title?.textContent ?? ""),
           currentValue: pressed ? swiftlyText(pressed) : "", isEmpty: !pressed,
-        });
+        }));
       }
       return out;
     },
     interactionDelayMs: 100,
   };
 
-  (globalThis.SWIFTLY_ADAPTERS || (globalThis.SWIFTLY_ADAPTERS = [])).push(adapter);
+  registerSwiftlyAdapter(adapter);
 })();

@@ -34,7 +34,7 @@ function swiftlyIsRendered(el) {
   if (el.closest("[hidden], [aria-hidden='true'], template")) return false;
   const style = el.ownerDocument.defaultView?.getComputedStyle(el);
   if (style && (style.display === "none" || style.visibility === "hidden")) return false;
-  // Walk up for display:none ancestors (getClientRects is empty for those).
+  // Covers display:none ancestors too: their descendants have no client rects.
   return el.getClientRects().length > 0;
 }
 
@@ -125,7 +125,7 @@ function nearbyText(el) {
   return "";
 }
 
-function isRequired(el, label, groupMembers) {
+function isRequired(el, groupMembers) {
   const targets = groupMembers ?? [el];
   if (targets.some(t => t.required || t.getAttribute?.("aria-required") === "true")) return true;
   const fs = targets[0].closest?.("fieldset, [role=radiogroup], [role=group]");
@@ -151,6 +151,18 @@ function baseField(el, extra) {
     placeholder: el.getAttribute("placeholder") || "",
     autocomplete: el.getAttribute("autocomplete") || "",
     ...extra,
+  };
+}
+
+// A DetectedField for a widget an adapter recognizes itself (Yes/No button
+// pairs, Workday prompts). Identifier fields default to empty so the catalog
+// can read every field the same way.
+function customField(fields) {
+  return {
+    tagName: fields.element.tagName.toLowerCase(),
+    name: "", idAttr: "", automationId: "", ariaLabel: "", placeholder: "", autocomplete: "",
+    nearbyText: "",
+    ...fields,
   };
 }
 
@@ -201,7 +213,7 @@ function detectFields(root, adapter = null) {
         label: groupLabel && groupLabel !== own ? `${groupLabel} ${own}`.trim() : own,
         optionLabel: own,
         members,
-        required: isRequired(el, own, members),
+        required: isRequired(el, members),
         currentValue: el.checked ? "checked" : "",
         isEmpty: !el.checked,
       }));
@@ -213,7 +225,7 @@ function detectFields(root, adapter = null) {
       label,
       members,
       options: members.map(m => ({ element: m, text: optionLabel(m) })),
-      required: isRequired(members[0], label, members),
+      required: isRequired(members[0], members),
       currentValue: members.filter(m => m.checked).map(optionLabel).join(", "),
       isEmpty: !members.some(m => m.checked),
     }));
@@ -252,7 +264,7 @@ function detectFields(root, adapter = null) {
     }
     field.label = label;
     field.nearbyText = label ? "" : nearbyText(el);
-    field.required = isRequired(el, label);
+    field.required = isRequired(el);
     fields.push(field);
   }
 
@@ -281,5 +293,5 @@ function describeField(f) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { detectFields, describeField, swiftlyText, swiftlyQueryAll };
+  module.exports = { detectFields, describeField, customField, swiftlyText, swiftlyQueryAll };
 }

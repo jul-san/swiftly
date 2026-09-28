@@ -126,15 +126,15 @@
         const container = box.closest("[data-automation-id^='formField-']") ?? box.parentElement;
         const selected = [...(container?.querySelectorAll("[data-automation-id='selectedItem']") ?? [])].map(s => swiftlyText(s)).filter(Boolean);
         const labelEl = input.labels?.[0] ?? container?.querySelector("label, legend");
-        out.push({
+        out.push(customField({
           kind: "combobox", widget: "workdayPrompt", element: input, searchInput: input, members: [input],
-          tagName: "input", inputType: "combobox", name: input.name || "", idAttr: input.id || "",
+          inputType: "combobox", name: input.name || "", idAttr: input.id || "",
           automationId: container?.getAttribute("data-automation-id") || "", ariaLabel: input.getAttribute("aria-label") || "",
-          placeholder: input.getAttribute("placeholder") || "", autocomplete: "",
-          label: cleanLabel(swiftlyText(labelEl)), nearbyText: "",
+          placeholder: input.getAttribute("placeholder") || "",
+          label: cleanLabel(swiftlyText(labelEl)),
           required: input.getAttribute("aria-required") === "true" || /\*/.test(labelEl?.textContent ?? ""),
           currentValue: selected.join(", "), isEmpty: !selected.length,
-        });
+        }));
       }
       return out;
     },
@@ -184,5 +184,5 @@
     resumeSettle: { quietMs: 1000, maxMs: 8000 },
   };
 
-  (globalThis.SWIFTLY_ADAPTERS || (globalThis.SWIFTLY_ADAPTERS = [])).push(adapter);
+  registerSwiftlyAdapter(adapter);
 })();

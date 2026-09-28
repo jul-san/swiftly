@@ -1,6 +1,6 @@
 // The autofill engine: detect → classify → decide → fill, repeated while
 // answering questions reveals new ones. ATS adapters (autofill/adapters/*.js)
-// register themselves in SWIFTLY_ADAPTERS and only add platform structure;
+// register themselves with registerSwiftlyAdapter and only add platform structure;
 // all semantic matching and safety rules live here and in catalog.js.
 //
 // Safety rules enforced here, for every adapter:
@@ -17,6 +17,10 @@
    swiftlySleep, PROVIDER_LABELS, otherCountryInQuestion, detectProviderFromHost, normalizeText */
 
 var SWIFTLY_ADAPTERS = globalThis.SWIFTLY_ADAPTERS || (globalThis.SWIFTLY_ADAPTERS = []);
+
+function registerSwiftlyAdapter(adapter) {
+  SWIFTLY_ADAPTERS.push(adapter);
+}
 
 const SWIFTLY_MAX_PASSES = 5;
 
@@ -47,10 +51,10 @@ function waitForDomSettle(doc, { quietMs = 350, maxMs = 2500 } = {}) {
 
 // ─── Choosing the answer for a specific control ───────────────────────────
 
-function choiceAnswerFor(answer, field) {
+function choiceAnswerFor(answer, field, key) {
   switch (answer.kind) {
     case "text":
-      if (/^personal\.(location|city)$/.test(field.__key)) return { kind: "location", value: answer.value };
+      if (key === "personal.location" || key === "personal.city") return { kind: "location", value: answer.value };
       return { kind: "text", value: answer.value };
     case "degree": return answer;
     case "boolean": return answer;
@@ -82,8 +86,7 @@ function textValueFor(answer, field) {
   }
 }
 
-async function fillField(field, answer, ctx) {
-  const adapter = ctx.adapter;
+async function fillField(field, key, answer, ctx) {
   switch (field.kind) {
     case "text": {
       const value = textValueFor(answer, field);
@@ -93,22 +96,21 @@ async function fillField(field, answer, ctx) {
       return fillText(field.element, value) ? { ok: true } : { ok: false, reason: "page rejected the value" };
     }
     case "select": {
-      const a = choiceAnswerFor(answer, field);
+      const a = choiceAnswerFor(answer, field, key);
       if (!a) return { ok: false, reason: "no usable answer for a dropdown" };
       const choice = chooseOption(field.options.map(o => o.text), a);
       if (choice.index === -1) return { ok: false, skip: true, reason: choice.reason };
       return fillNativeSelect(field.element, field.options[choice.index].index) ? { ok: true, reason: choice.reason } : { ok: false, reason: "page rejected the option" };
     }
     case "combobox": {
-      const a = choiceAnswerFor(answer, field);
+      const a = choiceAnswerFor(answer, field, key);
       if (!a) return { ok: false, reason: "no usable answer for a dropdown" };
       const query = a.kind === "text" ? a.value : a.kind === "location" ? a.value.split(",")[0] : null;
-      const res = await (adapter?.fillDropdown ?? fillDropdown)(field, a, { query });
-      return res;
+      return (ctx.adapter?.fillDropdown ?? fillDropdown)(field, a, { query });
     }
     case "radio":
     case "buttonGroup": {
-      const a = choiceAnswerFor(answer, field);
+      const a = choiceAnswerFor(answer, field, key);
       if (!a) return { ok: false, reason: "no usable answer" };
       const choice = chooseOption(field.options.map(o => o.text), a);
       if (choice.index === -1) return { ok: false, skip: true, reason: choice.reason };
@@ -157,8 +159,7 @@ function decide(field, profile, ctx) {
     const other = otherCountryInQuestion(field.label);
     if (other) return { ...out, action: "skipped", reason: `asks about ${other}; your saved answer is for the US` };
   }
-  if (field.kind !== "checkbox" && !field.isEmpty) return { ...out, action: "skipped", reason: "already has a value" };
-  if (field.kind === "checkbox" && !field.isEmpty) return { ...out, action: "skipped", reason: "already checked" };
+  if (!field.isEmpty) return { ...out, action: "skipped", reason: field.kind === "checkbox" ? "already checked" : "already has a value" };
   const answer = resolveAnswer(cls.key, profile, field, ctx);
   if (!answer) return { ...out, action: "skipped", reason: def?.sensitive ? "no explicit answer saved in your profile" : "no value in your profile" };
   if (field.kind === "checkbox" && answer.kind === "boolean" && answer.value === "no") return { ...out, action: "skipped", reason: "already matches your profile (unchecked)" };
@@ -223,11 +224,10 @@ async function runAutofill({ profile, resume = null, doc = document, loc = locat
       for (const m of field.members ?? []) handled.add(m);
       if (field.kind === "file" && !ctx.hasResume) { record(field, { action: "skipped", key: classifyField(field, field.hintKey).key, confidence: 0, reason: "no saved resume file" }); continue; }
       const d = decide(field, profile, ctx);
-      field.__key = d.key;
       if (d.action !== "fill") { record(field, d); continue; }
       let result;
       try {
-        result = await fillField(field, d.answer, ctx);
+        result = await fillField(field, d.key, d.answer, ctx);
       } catch (err) {
         result = { ok: false, reason: `error: ${err?.message ?? err}` };
       }

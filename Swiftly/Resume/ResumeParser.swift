@@ -123,7 +123,7 @@ struct ResumeParser {
             switch parse(text: text, filename: filename) {
             case .success(let result):
                 let score = completenessScore(result.profile)
-                if best == nil || score > best!.score { best = (result, score) }
+                if score > best?.score ?? Int.min { best = (result, score) }
             case .failure(let error):
                 firstError = firstError ?? error
             }
@@ -135,7 +135,7 @@ struct ResumeParser {
     // How much of a usable profile a parse recovered. Only entries whose key fields all
     // came out count in full, so a reading that splits one job into several fragments
     // doesn't outscore one that parsed it cleanly.
-    func completenessScore(_ profile: ApplicantProfile) -> Int {
+    private func completenessScore(_ profile: ApplicantProfile) -> Int {
         var score = 0
         for job in profile.experience {
             let complete = !job.company.isEmpty && !job.title.isEmpty && job.startDate != nil
@@ -281,6 +281,7 @@ struct ResumeParser {
             .filter { !$0.isEmpty && !$0.contains("@") }
         let urls = tokens.compactMap(contactURL)
 
+        // A LinkedIn profile URL outside the header (e.g. in a footer) still counts.
         personal.linkedinURL = urls.first { $0.lowercased().contains("linkedin.com") }
             ?? allLines.flatMap { extractAll(pattern: Self.bareURLRegex, from: [$0]) + extractAll(pattern: Self.httpsURLRegex, from: [$0]) }
                 .first { $0.lowercased().contains("linkedin.com/in/") }
@@ -488,8 +489,8 @@ struct ResumeParser {
             }
         }
 
-        if entry.graduationDate != nil && !entry.currentOrPlanned {
-            entry.currentOrPlanned = isFutureDate(entry.graduationDate!)
+        if let graduationDate = entry.graduationDate, !entry.currentOrPlanned {
+            entry.currentOrPlanned = isFutureDate(graduationDate)
         }
 
         return entry.institution.isEmpty && entry.degree == nil ? nil : entry
@@ -1003,16 +1004,17 @@ struct ResumeParser {
 
     private func isBullet(_ line: String) -> Bool {
         guard let first = line.unicodeScalars.first else { return false }
-        if Self.bulletChars.contains(first) { return true }
-        // Word's default second-level bullet is a Courier "o".
-        return line.hasPrefix("- ") || line.hasPrefix("* ") || line.hasPrefix("o ") || line == "o"
+        return Self.bulletChars.contains(first) || hasASCIIBulletMarker(line)
+    }
+
+    // "- ", "* ", and Word's default second-level bullet, a Courier "o".
+    private func hasASCIIBulletMarker(_ line: String) -> Bool {
+        line.hasPrefix("- ") || line.hasPrefix("* ") || line.hasPrefix("o ") || line == "o"
     }
 
     private func stripBullet(_ line: String) -> String {
         var s = line.trimmingCharacters(in: .whitespaces)
-        if let first = s.unicodeScalars.first, Self.bulletChars.contains(first) {
-            s = String(s.dropFirst())
-        } else if s.hasPrefix("- ") || s.hasPrefix("* ") || s.hasPrefix("o ") || s == "o" {
+        if isBullet(s) {
             s = String(s.dropFirst())
         }
         return s.replacingOccurrences(of: "\t", with: " ").trimmingCharacters(in: .whitespaces)
