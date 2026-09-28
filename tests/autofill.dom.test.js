@@ -293,6 +293,47 @@ test("Workday: fills each step as the user moves through it, never presses Next"
   assertLogsArePrivate(logs, profile);
 });
 
+test("Workday: My Information step from a saved live page", async () => {
+  const profile = testProfile({ personal: { addressLine1: "1 Example Way", postalCode: "94105", country: "United States" } });
+  const { page, logs } = await openFixture({ url: "https://example.wd5.myworkdayjobs.com/en-US/External/job/X/apply/applyManually", fixture: "workday-myinfo-snapshot.html" });
+  const report = await sendMessage(page, { action: "autofill", profile, resume: RESUME });
+  const wd = await page.evaluate(() => window.__wd);
+
+  assert.equal(report.provider, "workday");
+  assert.equal(wd["source--source"], "LinkedIn");
+  assert.equal(wd["name--legalName--firstName"], "Avery");
+  assert.equal(wd["name--legalName--lastName"], "Example");
+  assert.equal(wd["address--addressLine1"], "1 Example Way");
+  assert.equal(wd["address--city"], "San Francisco");
+  assert.equal(wd["address--countryRegion"], "California", "chosen from the popup, not from the phone-code prompt's selected pill");
+  assert.equal(wd["address--postalCode"], "94105");
+  assert.equal(wd["phoneNumber--phoneNumber"], "(555) 010-0199");
+  // The hidden id input beside each listbox button is never typed into.
+  const shims = await page.$$eval("button[aria-haspopup=listbox] + input", els => els.map(e => e.value));
+  assert.deepEqual(shims, ["bc33aa3152ec42d4995f4791a106ed09", "california", ""]);
+  assert.equal(wd["country--country"], undefined, "preselected country left alone");
+  assert.equal(wd["phoneNumber--extension"], undefined, "extension is not the phone number");
+  assert.equal(wd["phoneNumber--countryPhoneCode"], undefined);
+  assert.equal(wd.candidateIsPreviousWorker, undefined, "previous-worker question left for the user");
+  assert.equal(wd["phoneNumber--phoneType"], undefined, "phone device type not guessed");
+  assert.equal(wd.zr8y5, undefined, "SMS opt-in never checked");
+  assert.deepEqual(report.needsAttention.map(l => l.slice(0, 20)), ["Have you previously ", "Phone Device Type"]);
+  assert.equal(await page.evaluate(() => window.__untrustedNext), 0, "Swiftly never clicks Save and Continue");
+  assertLogsArePrivate(logs, profile);
+});
+
+test("Workday: My Information keeps typed values and reports what the profile lacks", async () => {
+  const { page } = await openFixture({ url: "https://example.wd5.myworkdayjobs.com/en-US/External/job/X/apply/applyManually", fixture: "workday-myinfo-snapshot.html" });
+  await page.fill("#name--legalName--firstName", "Ave");
+  const report = await sendMessage(page, { action: "autofill", profile: testProfile(), resume: RESUME });
+  const wd = await page.evaluate(() => window.__wd);
+  assert.equal(wd["name--legalName--firstName"], "Ave", "existing value preserved");
+  assert.equal(await page.inputValue("#address--addressLine1"), "", "no street address in the profile, none invented");
+  assert.equal(await page.inputValue("#address--postalCode"), "");
+  assert.ok(report.needsAttention.includes("Address Line 1"));
+  assert.ok(report.needsAttention.includes("Postal Code"));
+});
+
 // ─── Cross-cutting ────────────────────────────────────────────────────────
 
 test("frames without an application stay silent so the embedding frame's form answers", async () => {

@@ -108,7 +108,8 @@ function findOpenOptions(field) {
   }
   if (!lists.length) {
     // Popups rendered at the document root (Workday, Radix, Headless UI…).
-    lists.push(...[...doc.querySelectorAll("[role=listbox]")].filter(swiftlyIsRendered));
+    // Workday prompts keep their selected pills in a rendered listbox too; those aren't choices.
+    lists.push(...[...doc.querySelectorAll("[role=listbox]:not([data-automation-id=selectedItemList])")].filter(swiftlyIsRendered));
   }
   const options = [];
   for (const list of lists) {

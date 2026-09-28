@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!--
+  Workday "My Information" step, from a saved live page (September 2026,
+  <tenant>.wd5.myworkdayjobs.com/.../apply/applyManually). The markup inside
+  applyFlowPage is the real DOM with generated class names, inline styles and
+  icons removed, the employer and job renamed, and the account email replaced.
+  Things the synthetic workday-app.html fixture did not have:
+    - every listbox button has an unlabelled sibling <input type="text"> that
+      holds the selected option's internal id (visually hidden, still rendered)
+    - Country arrives preselected; Country Phone Code is a prompt with a
+      preselected pill inside a rendered ul[role=listbox] (selectedItemList)
+    - the email is plain text, and there is an SMS opt-in checkbox and a
+      Phone Extension field next to Phone Number
+  The script below emulates Workday's behavior: listbox popups and prompt
+  results render a moment after the click/Enter in a body-level popup, and
+  values are recorded only from events (window.__wd), the way React state is.
+-->
+<html lang="en-US"><head><meta charset="utf-8"><title>Workday My Information fixture</title>
+<style>
+  button[aria-haspopup=listbox] + input[type=text] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+  input[type=radio], input[type=checkbox] { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<main>
+<div data-automation-id="applyFlowPage"><div><div dir="ltr"><button type="button" data-automation-id="backToJobPosting" role="link"><span></span><span>Back to Job Posting</span></button></div><h2 data-automation-id="jobTitleHeading">Example Engineer II</h2></div><div aria-label="Application Progress"><ol data-automation-id="progressBar"><li data-automation-id="progressBarActiveStep"><div><div color="#002288"></div><div><div color="#002288"></div></div><div color="#002288"></div></div><label aria-live="polite">current step 1 of 6</label><label>My Information</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 2 of 6</label><label>My Experience</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 3 of 6</label><label>Application Questions</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 4 of 6</label><label>Voluntary Disclosures</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 5 of 6</label><label>Self Identify</label></li><li data-automation-id="progressBarInactiveStep"><div><div color="#002288"></div><div><div></div></div><div color="#002288"></div></div><label aria-live="polite">step 6 of 6</label><label>Review</label></li></ol></div><div><div><h3 tabindex="-1">My Information</h3><div><abbr>*</abbr> Indicates a required field</div><div data-automation-id="applyFlowMyInfoPage"><div role="group" aria-labelledby="source-section"><div data-fkit-id="source--null"><div data-automation-id="formField-source" data-fkit-id="source--source"><label for="source--source"><span>How Did You Hear About Us?<abbr aria-hidden="true">*</abbr></span></label><div><div><div><div dir="ltr" tabindex="-1" data-automation-id="multiSelectContainer" id="df9e0465-d843-49af-8021-b300e9a10f03" data-uxi-element-id="df9e0465-d843-49af-8021-b300e9a10f03" data-uxi-widget-type="multiselect"><div data-automation-id="multiselectInputContainer" dir="ltr" color="#0875e1"><div data-automation-hiddensearch="false"><input enterkeyhint="search" dir="ltr" placeholder="Search" aria-invalid="false" aria-describedby="acbbac84-48a9-401c-b914-46e75c958a87" aria-disabled="false" aria-required="true" autocomplete="off" tabindex="0" data-uxi-element-id="selectinput-df9e0465-d843-49af-8021-b300e9a10f03" data-uxi-widget-type="selectinput" data-uxi-multiselect-id="df9e0465-d843-49af-8021-b300e9a10f03" id="source--source" value=""><div data-automation-id="promptSelectionLabel"></div><div id="acbbac84-48a9-401c-b914-46e75c958a87" aria-hidden="true" data-automation-id="promptAriaInstruction">0 items selected</div></div><span data-automation-id="promptIcon" data-uxi-element-id="promptIcon-df9e0465-d843-49af-8021-b300e9a10f03" data-uxi-widget-type="selectinputicon" data-uxi-multiselect-id="df9e0465-d843-49af-8021-b300e9a10f03" data-uxi-selectinputicon-type="promptIcon" aria-hidden="true" aria-invalid="false" tabindex="-2"></span></div></div></div></div><div></div></div></div></div></div><div role="group" aria-labelledby="previousWorker-section"><div data-fkit-id="previousWorker--null"><div data-automation-id="formField-candidateIsPreviousWorker" data-fkit-id="previousWorker--candidateIsPreviousWorker"><fieldset><legend><label id="radio-label2"><span>Have you previously been employed or worked as a contractor at Acme Aerospace? CURRENT EMPLOYEES: Please apply via your internal Workday Jobs Hub account. CONTRACTORS: Please proceed with your application here.<abbr aria-hidden="true">*</abbr></span></label></legend><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><div name="candidateIsPreviousWorker" aria-labelledby="radio-label2" id="previousWorker--candidateIsPreviousWorker" aria-required="true"><div><div><input id="zr8y7" name="candidateIsPreviousWorker" type="radio" aria-checked="false" value="true"><span></span><div><div></div></div></div><label cursor="default" for="zr8y7">Yes</label></div><div><div><input id="zr8y8" name="candidateIsPreviousWorker" type="radio" aria-checked="false" value="false"><span></span><div><div></div></div></div><label cursor="default" for="zr8y8">No</label></div></div></div><div></div></div></fieldset></div></div></div><div role="group" aria-labelledby="country-section"><div data-fkit-id="country--null"><div data-automation-id="formField-country" data-fkit-id="country--country"><label for="country--country"><span>Country<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><div><button aria-haspopup="listbox" type="button" value="bc33aa3152ec42d4995f4791a106ed09" aria-label="Country United States of America Required" name="country" id="country--country">United States of America</button><input type="text" value="bc33aa3152ec42d4995f4791a106ed09"><span></span></div></div><div></div></div></div></div></div><div data-automation-id="smartDivider" data-smart-divider="true" style=""></div><div role="group" aria-labelledby="Legal-Name-section"><h4 id="Legal-Name-section">Legal Name</h4><div data-fkit-id="name--null"><div data-automation-id="formField-legalName--firstName" data-fkit-id="name--legalName--firstName"><label for="name--legalName--firstName"><span>First Name<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="name--legalName--firstName" name="legalName--firstName" aria-required="true" value=""></div><div></div></div></div><div data-automation-id="formField-legalName--lastName" data-fkit-id="name--legalName--lastName"><label for="name--legalName--lastName"><span>Last Name<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="name--legalName--lastName" name="legalName--lastName" aria-required="true" value=""></div><div></div></div></div><div data-automation-id="formField-preferredCheck" data-fkit-id="name--preferredCheck"><label for="name--preferredCheck">I have a preferred name</label><div><div><div><div><input id="name--preferredCheck" type="checkbox" aria-checked="false" name="preferredCheck" aria-required="false"><span></span><div><div></div></div></div></div></div><div></div></div></div></div></div><div data-automation-id="smartDivider" data-smart-divider="true" style=""></div><div role="group" aria-labelledby="Address-section"><h4 id="Address-section">Address</h4><div data-fkit-id="address--null"><div data-automation-id="formField-addressLine1" data-fkit-id="address--addressLine1"><label for="address--addressLine1"><span>Address Line 1<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="address--addressLine1" name="addressLine1" aria-required="true" value=""></div><div></div></div></div><div data-automation-id="formField-city" data-fkit-id="address--city"><label for="address--city"><span>City<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="address--city" name="city" aria-required="true" value=""></div><div></div></div></div><div data-automation-id="formField-countryRegion" data-fkit-id="address--countryRegion"><label for="address--countryRegion"><span>State<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><div><button aria-haspopup="listbox" type="button" value="" aria-label="State Select One Required" name="countryRegion" id="address--countryRegion">Select One</button><input type="text" value=""><span></span></div></div><div></div></div></div><div data-automation-id="formField-postalCode" data-fkit-id="address--postalCode"><label for="address--postalCode"><span>Postal Code<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="address--postalCode" name="postalCode" aria-required="true" value=""></div><div></div></div></div></div></div><div data-automation-id="smartDivider" data-smart-divider="true" style=""></div><div role="group" aria-labelledby="Email-Address-section"><h4 id="Email-Address-section">Email Address</h4><div data-fkit-id="emailAddress--null"><div><label for="emailAddress"></label><div><span id="emailAddress">avery.example@example.com</span></div></div></div></div><div data-automation-id="smartDivider" data-smart-divider="true" style=""></div><div role="group" aria-labelledby="Phone-section"><h4 id="Phone-section">Phone</h4><div data-fkit-id="phoneNumber--null"><div data-automation-id="formField-phoneType" data-fkit-id="phoneNumber--phoneType"><label for="phoneNumber--phoneType"><span>Phone Device Type<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><div><button aria-haspopup="listbox" type="button" value="" aria-label="Phone Device Type Select One Required" name="phoneType" id="phoneNumber--phoneType">Select One</button><input type="text" value=""><span></span></div></div><div></div></div></div><div data-automation-id="formField-countryPhoneCode" data-fkit-id="phoneNumber--countryPhoneCode"><label for="phoneNumber--countryPhoneCode"><span>Country Phone Code<abbr aria-hidden="true">*</abbr></span></label><div><div><div><div dir="ltr" tabindex="-1" data-automation-id="multiSelectContainer" id="61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-element-id="61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-widget-type="multiselect"><div data-automation-id="multiselectInputContainer" dir="ltr" color="#0875e1"><div data-automation-hiddensearch="false"><input enterkeyhint="search" dir="ltr" placeholder="Search" aria-invalid="false" aria-describedby="b7cd16f7-5d55-41cf-8522-6d2d96f4db5a" aria-disabled="false" aria-required="true" autocomplete="off" tabindex="0" data-uxi-element-id="selectinput-61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-widget-type="selectinput" data-uxi-multiselect-id="61f660cb-6660-478c-95f0-a1e32cc40e16" id="phoneNumber--countryPhoneCode" value=""><div data-automation-id="promptSelectionLabel"></div><div id="b7cd16f7-5d55-41cf-8522-6d2d96f4db5a" aria-hidden="true" data-automation-id="promptAriaInstruction">1 item selected, United States of America (+1)</div></div><div tabindex="-1"><ul role="listbox" tabindex="0" data-automation-id="selectedItemList" aria-label="items selected" data-uxi-element-id="selectinputlist-61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-widget-type="selectinputlist" data-uxi-multiselect-id="61f660cb-6660-478c-95f0-a1e32cc40e16"><li role="presentation" data-automation-id="menuItem" data-automation-selected="false" data-uxi-element-id="selectinputlistitem-61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-widget-type="selectinputlistitem" data-uxi-multiselect-id="61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-selectinputlistitem-index=""><div aria-posinset="1" aria-setsize="1" id="pill-db8d3ca6446c11de98360015c5e6daf6" tabindex="-1" aria-label="United States of America (+1), press delete to clear value." role="option" data-automation-id="selectedItem" dir="ltr"><div data-automation-id="DELETE_charm" role="presentation" aria-hidden="true" tabindex="-1"><span></span></div><p data-automation-id="promptOption" data-automation-label="United States of America (+1)">United States of America (+1)</p></div></li></ul></div><span data-automation-id="promptIcon" aria-hidden="true" aria-invalid="false" tabindex="-2" data-uxi-element-id="promptIcon-61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-widget-type="selectinputicon" data-uxi-multiselect-id="61f660cb-6660-478c-95f0-a1e32cc40e16" data-uxi-selectinputicon-type="promptIcon"></span></div></div></div></div><div></div></div></div><div data-automation-id="formField-phoneNumber" data-fkit-id="phoneNumber--phoneNumber"><label for="phoneNumber--phoneNumber"><span>Phone Number<abbr aria-hidden="true">*</abbr></span></label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="phoneNumber--phoneNumber" name="phoneNumber" aria-required="true" value=""></div><div></div></div></div><div data-automation-id="formField-extension" data-fkit-id="phoneNumber--extension"><label for="phoneNumber--extension">Phone Extension</label><div><div style="width: 100%; max-width: 344px; min-width: 280px;"><input type="text" id="phoneNumber--extension" name="extension" aria-required="false" value=""></div><div></div></div></div></div></div><div><div><div><input id="zr8y5" type="checkbox" aria-checked="false" data-automation-id="phone-sms-opt-in"><span></span><div><div></div></div></div></div><div></div><a data-automation-id="phone-terms-and-condition-link" href="" target="_blank">Terms and Conditions</a></div></div></div><div data-automation-id="pageFooter"><div><div><button data-automation-id="pageFooterNextButton" font-size="14" height="40">Save and Continue</button></div></div></div></div></div>
+</main>
+<script>
+  window.__wd = {};
+  window.__untrustedNext = 0;
+  const OPTIONS = {
+    "country--country": ["Canada", "United Kingdom", "United States of America"],
+    "address--countryRegion": ["Alabama", "Alaska", "Arizona", "California", "Colorado", "New York", "Washington"],
+    "phoneNumber--phoneType": ["Home", "Mobile", "Work"],
+  };
+  const PROMPTS = {
+    "source--source": ["LinkedIn", "Indeed", "Glassdoor", "Company Website", "Employee Referral"],
+  };
+
+  document.addEventListener("input", e => { if (e.target.id) window.__wd[e.target.id] = e.target.value; }, true);
+  document.addEventListener("change", e => {
+    const t = e.target;
+    if (t.type === "checkbox") window.__wd[t.id] = t.checked;
+    else if (t.type === "radio") window.__wd[t.name] = t.value;
+    else if (t.id) window.__wd[t.id] = t.value;
+  }, true);
+  document.querySelector("[data-automation-id=pageFooterNextButton]").addEventListener("click", e => {
+    if (!e.isTrusted) window.__untrustedNext++;
+  });
+
+  function closePopup() { document.querySelectorAll("[data-automation-widget=wd-popup]").forEach(p => p.remove()); }
+  function popup(ownerId) {
+    const div = document.createElement("div");
+    div.setAttribute("data-automation-widget", "wd-popup");
+    div.dataset.owner = ownerId;
+    const ul = document.createElement("ul"); ul.setAttribute("role", "listbox");
+    div.append(ul);
+    return { div, ul };
+  }
+
+  // Listbox buttons: the popup renders shortly after the click.
+  document.addEventListener("click", e => {
+    const btn = e.target.closest("button[aria-haspopup=listbox]");
+    if (!btn) return;
+    const wasOpen = document.querySelector(`[data-automation-widget=wd-popup][data-owner="${btn.id}"]`);
+    closePopup();
+    if (wasOpen) { btn.removeAttribute("aria-expanded"); return; }
+    btn.setAttribute("aria-expanded", "true");
+    setTimeout(() => {
+      const { div, ul } = popup(btn.id);
+      for (const label of OPTIONS[btn.id] ?? []) {
+        const li = document.createElement("li"); li.setAttribute("role", "option");
+        li.setAttribute("aria-selected", String(btn.textContent === label));
+        const text = document.createElement("div"); text.textContent = label; li.append(text);
+        li.addEventListener("click", () => {
+          btn.textContent = label;
+          btn.value = label.toLowerCase().replace(/\W+/g, "");
+          btn.nextElementSibling.value = btn.value;
+          window.__wd[btn.id] = label;
+          closePopup(); btn.removeAttribute("aria-expanded");
+        });
+        ul.append(li);
+      }
+      document.body.append(div);
+    }, 150);
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closePopup(); });
+
+  // Prompts: Enter searches; results render in a popup; clicking one adds a pill.
+  document.addEventListener("keydown", e => {
+    const input = e.target.closest?.("[data-automation-id=multiSelectContainer] input");
+    if (!input || e.key !== "Enter" || !PROMPTS[input.id]) return;
+    const q = input.value.toLowerCase();
+    closePopup();
+    setTimeout(() => {
+      const { div, ul } = popup(input.id);
+      for (const label of PROMPTS[input.id].filter(l => l.toLowerCase().includes(q))) {
+        const li = document.createElement("li"); li.setAttribute("role", "option");
+        const p = document.createElement("div");
+        p.setAttribute("data-automation-id", "promptOption"); p.setAttribute("data-automation-label", label); p.textContent = label;
+        li.append(p);
+        li.addEventListener("click", () => {
+          const box = input.closest("[data-automation-id=multiSelectContainer]");
+          const pill = document.createElement("div"); pill.setAttribute("data-automation-id", "selectedItem"); pill.setAttribute("role", "option");
+          pill.textContent = label;
+          const list = document.createElement("ul"); list.setAttribute("role", "listbox"); list.setAttribute("data-automation-id", "selectedItemList");
+          const item = document.createElement("li"); item.append(pill); list.append(item);
+          box.querySelector("[data-automation-id=multiselectInputContainer]").append(list);
+          box.querySelector("[data-automation-id=promptAriaInstruction]").textContent = `1 item selected, ${label}`;
+          input.value = ""; window.__wd[input.id] = label; closePopup();
+        });
+        ul.append(li);
+      }
+      document.body.append(div);
+    }, 150);
+  });
+</script>
+</body></html>
